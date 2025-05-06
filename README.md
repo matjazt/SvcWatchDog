@@ -47,10 +47,10 @@ Please note that if you make a mistake in the JSON syntax, SvcWatchDog may not s
 - SvcWatchDog is based on PJ Naughter's CNTService class, which is a wrapper around the Windows Service API. You can find more information about it here:
 http://www.naughter.com/serv.html
 Fragments of CNTService code were used with explicit permission by the author. Thanks to PJ Naughter ( http://www.naughter.com/ ) for his work and for allowing us to use it!
-This disclaimer is also included in the file [LICENSE.CNTService](LICENSE.CNTService).
+This disclaimer is also included in the file [LICENSE-CNTService](LICENSE-CNTService).
 
 - SvcWatchDog uses the "nlohmann/json" library for JSON parsing. This library is included in the project and is licensed under the MIT License. You can find more information about it here:
 https://github.com/nlohmann/json
 https://json.nlohmann.me/
-The disclaimer for this library is included in file [LICENSE.jsonhpp](LICENSE.jsonhpp).
+The disclaimer for this library is included in file [LICENSE-jsonhpp](LICENSE-jsonhpp).
 Thanks to Niels Lohmann and contributors for this great library!
