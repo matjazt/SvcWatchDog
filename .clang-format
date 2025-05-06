@@ -1,0 +1,7 @@
+BasedOnStyle: Google
+BreakBeforeBraces: Allman
+IndentWidth: 4
+ColumnLimit: 140
+IncludeBlocks: Preserve
+SortIncludes: Never
+

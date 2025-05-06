@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Core">
+      <UniqueIdentifier>{85f2e07c-b5a0-42c4-a885-2871248cefac}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{eb710990-20d4-4179-9e84-3be43b2fe904}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{53087ca8-54a5-4c35-95fd-9a540f6d3978}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Logger\Logger.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SvcWatchDog\SvcWatchDog.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SvcWatchDog\Main.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\JsonConfig\JsonConfig.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SimpleTools\SimpleTools.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\Logger\Logger.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\SvcWatchDog\SvcWatchDog.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\nlohmann\json.hpp">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\JsonConfig\JsonConfig.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\SimpleTools\SimpleTools.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\SvcWatchDog\resource.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SvcWatchDog.json" />
+    <None Include="Scripts\TestService.ps1">
+      <Filter>Scripts</Filter>
+    </None>
+    <None Include="Scripts\pack.bat">
+      <Filter>Scripts</Filter>
+    </None>
+    <None Include="README.md" />
+    <None Include="LICENSE" />
+    <None Include="LICENSE.CNTService" />
+    <None Include="LICENSE.jsonhpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Include\SvcWatchDog\SvcWatchDog.rc">
+      <Filter>Core</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

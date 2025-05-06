@@ -1,0 +1,20 @@
+{
+  "log": {
+    "consoleLevel": 0,
+    "fileLevel": 0,
+    "filePath": "log\\SvcWatchDog.log",
+    "maxFileSize": 10000000,
+    "maxOldFiles": 3,
+    "maxWriteDelay": 500,
+    "logThreadId": false
+  },
+  "svcWatchDog": {
+    "workDir": "..",
+    "args": [ "powershell.exe", "-File", "TestService\\TestService.ps1" ],
+    "usePath": true,
+    "autoStart": true,
+    "restartDelay": 2000,
+    "shutdownTime": 3000,
+    "watchdogTimeout": 7000
+  }
+}

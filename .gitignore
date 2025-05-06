@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Debug
+/Release
+
+/log
+/Testing/TestService.log
+/Win32
+/x64
+/SvcWatchDogDist
+*.aps
+*.user
