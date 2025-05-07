@@ -74,9 +74,10 @@ Please note that if you make a mistake in the JSON syntax, **SvcWatchDog** may n
 - **autoStart**: true if you wish to start the win32 service automatically when the system boots. Default is false.  
 - **restartDelay**: Delay in milliseconds before restarting the application after it has been stopped. Default is 5000 ms.  
 - **shutdownTime**: Timeout in milliseconds for the child application to shut down gracefully. Default is 10000 ms.  
-- **watchdogTimeout**: Timeout in milliseconds for the child application to send UDP ping. Default is -1, which means that the watchdog functionality is disabled. It is therefore not necessary for your app to send pings if you do not want to use this feature.  
-If you do decide to use it, it is recommeded to use rather large timeout values, otherwise you risk that occasional system overloads, not so uncommon in virtualized environments, will cause you app to be restarted due to not pinging **SvcWatchDog** fast enough. It is also recommended that the watchdogTimeout is set to at least 2 times the ping interval you app uses.  
-The default configuration file contains a short watchdogTimeout to just to make testing quicker.
+- **watchdogTimeout**: The timeout (in milliseconds) for the child application to send a UDP ping packets. The default value is -1, which disables the watchdog functionality. If you keep it this way, your application does not need to send pings.  
+If you do enable it, it is **recommended to use a relatively large timeout value**. Otherwise, occasional system overloads, which are common in virtualized environments, may cause your application to be restarted due to delayed pings.  
+The default configuration file includes a short watchdogTimeout just to make testing quicker.  
+Additionally, the watchdogTimeout should be set to **at least twice the interval** at which your application sends pings.
 
 ## Application considerations
 
