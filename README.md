@@ -1,5 +1,5 @@
 ﻿# SvcWatchDog
-[**SvcWatchDog**](https://github.com/matjazt/**SvcWatchDog**) is a Windows utility that operates like a Win32 service, enabling the execution and monitoring of virtually any console application. By handling service-related functionality, it eliminates the need for developers to integrate their applications directly with the Win32 service system, while also enhancing reliability through robust monitoring mechanisms.  
+[**SvcWatchDog**](https://github.com/matjazt/**SvcWatchDog**) is a Windows utility that operates like a Win32 service, enabling the execution and monitoring of virtually any non-interactive application. By handling service-related functionality, it eliminates the need for developers to integrate their applications directly with the Win32 service system, while also enhancing reliability through robust monitoring mechanisms.  
 The program automatically detects when the application terminates and restarts it as needed. Additionally, it can be configured to listen for regular UDP "pings" from the application, confirming its operational state. If the application fails to send a ping within a defined timeframe, **SvcWatchDog** will restart it, helping to recover from unexpected hangs or crashes that do not result in termination.  
 To facilitate a controlled shutdown, **SvcWatchDog** creates a global Win32 event and shares its name with the application, allowing it to monitor the event and gracefully terminate when requested.  
 The utility is designed to be lightweight and simple to use. It consists of a single executable file and requires a single JSON configuration file.
@@ -105,6 +105,9 @@ This disclaimer is also included in the file [LICENSE-CNTService](LICENSE-CNTSer
 <https://json.nlohmann.me/>  
 Thanks to Niels Lohmann and contributors!  
 The disclaimer for this library is included in file [LICENSE-jsonhpp](LICENSE-jsonhpp).
+
+## Future plans
+- Add support for SMTP alerting.
 
 ## Contact
 
