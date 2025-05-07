@@ -1,3 +1,11 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
+ *
+ * Permission is hereby granted, free of charge, ... (standard MIT license).
+ */
+
 #include <SvcWatchDog/SvcWatchDog.h>
 #include <JsonConfig/JsonConfig.h>
 #include <Logger/Logger.h>
@@ -64,6 +72,7 @@ int main(int argc, char* argv[])
 
         // When we get here, the service has been stopped
         returnCode = cService.m_serviceStatus.dwWin32ExitCode;
+        LOGSTR() << "exiting with result code " << returnCode;
     }
 
     WSACleanup();

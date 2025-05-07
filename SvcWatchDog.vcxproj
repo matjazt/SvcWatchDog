@@ -236,9 +236,10 @@
     <ClInclude Include="Include\Logger\Logger.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ChangeLog.md" />
     <None Include="LICENSE" />
-    <None Include="LICENSE.CNTService" />
-    <None Include="LICENSE.jsonhpp" />
+    <None Include="LICENSE-CNTService" />
+    <None Include="LICENSE-jsonhpp" />
     <None Include="README.md" />
     <None Include="Scripts\pack.bat" />
     <None Include="Scripts\TestService.ps1" />

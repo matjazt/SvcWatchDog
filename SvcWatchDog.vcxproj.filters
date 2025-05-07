@@ -59,8 +59,9 @@
     </None>
     <None Include="README.md" />
     <None Include="LICENSE" />
-    <None Include="LICENSE.CNTService" />
-    <None Include="LICENSE.jsonhpp" />
+    <None Include="LICENSE-CNTService" />
+    <None Include="LICENSE-jsonhpp" />
+    <None Include="ChangeLog.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Include\SvcWatchDog\SvcWatchDog.rc">

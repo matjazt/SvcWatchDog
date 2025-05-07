@@ -1,3 +1,18 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
+ *
+ * Permission is hereby granted, free of charge, ... (standard MIT license).
+ *
+ * ==================================================================================
+ *
+ * Additional copyright notice: windows service integration is based on PJ Naughter's
+ * CNTService class ( http://www.naughter.com/serv.html ) and contains fragments of
+ * its code. It is used here with explicit permission by the author.
+ *
+ * ==================================================================================
+ */
 
 #include <windows.h>
 #include <SimpleTools/SimpleTools.h>

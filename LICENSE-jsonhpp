@@ -1,6 +1,6 @@
 SvcWatchDog depends on nlohmann JSON for Modern C++ library
 (json.hpp, https://github.com/nlohmann/json, https://json.nlohmann.me/).
-Thanks to Niels Lohmann and contributors for this great library!
+Thanks to Niels Lohmann and contributors!
 Below is the license of this library:
 ------------------------------------------------------------------------------
 

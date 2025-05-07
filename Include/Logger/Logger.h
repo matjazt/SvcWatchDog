@@ -1,3 +1,11 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
+ *
+ * Permission is hereby granted, free of charge, ... (standard MIT license).
+ */
+
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
@@ -23,7 +31,10 @@ enum LogLevel
     Error,
 
     // If you have a pager, it goes off when one of these occurs.
-    Fatal
+    Fatal,
+
+    // No logging at all.
+    MaskAllLogs
 };
 
 class Logger : public NoCopy

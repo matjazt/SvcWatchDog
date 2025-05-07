@@ -1,3 +1,18 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
+ *
+ * Permission is hereby granted, free of charge, ... (standard MIT license).
+ *
+ * ==================================================================================
+ *
+ * Additional copyright notice: windows service integration is based on PJ Naughter's
+ * CNTService class ( http://www.naughter.com/serv.html ) and contains fragments of
+ * its code. It is used here with explicit permission by the author.
+ *
+ * ==================================================================================
+ */
 
 #include <SvcWatchDog/SvcWatchDog.h>
 #include <JsonConfig/JsonConfig.h>
@@ -94,7 +109,6 @@ void SvcWatchDog::Configure()
                     {
                         // found the file in the path, use it
                         argv[0] = candidate.string();
-                        LOGSTR() << "using target executable " << argv[0];
                         targetFound = true;
                         break;
                     }
@@ -104,7 +118,11 @@ void SvcWatchDog::Configure()
                     LOGSTR(Error) << "target executable " << argv[0] << " not found in path";
                 }
             }
-            m_targetExecutable = arg;
+
+            // while m_argv contains quoted parameters (starting with executable), we also need non-quoted executable (for logging purposes
+            // and for actual execution)
+            m_targetExecutable = argv[0];
+            LOGSTR() << "using target executable " << m_targetExecutable;
         }
 
         m_argv[i] = _strdup(("\"" + argv[i] + "\"").c_str());
@@ -250,7 +268,7 @@ void SvcWatchDog::StartUdpWatchDog()
     }
 
     m_watchdogPort = ntohs(assignedAddr.sin_port);
-    LOGSTR(Information) << "listening on localhost:" << m_watchdogPort << " (UDP, Non-blocking)";
+    LOGSTR(Information) << "listening on 127.0.0.1:" << m_watchdogPort << " (UDP)";
 }
 
 bool SvcWatchDog::ReceiveUdpPing()
@@ -360,7 +378,7 @@ void SvcWatchDog::Run()
 
         LOGSTR() << "starting " << m_targetExecutable;
 
-        HANDLE processHandle = (HANDLE)_spawnv(_P_NOWAIT, &m_targetExecutable[0], m_argv);
+        auto processHandle = _spawnv(_P_NOWAIT, &m_targetExecutable[0], m_argv);
 
         WaitForSingleObject(m_loopTriggerEvent, 250);
 
@@ -371,13 +389,13 @@ void SvcWatchDog::Run()
         uint64_t now = SteadyTime();
         uint64_t nextPing = now + watchdogTimeout;
 
-        while (processHandle && exitCode == STILL_ACTIVE && (m_killTime == 0 || m_killTime > now))
+        while (processHandle >= 0 && exitCode == STILL_ACTIVE && (m_killTime == 0 || m_killTime > now))
         {
             WaitForSingleObject(m_loopTriggerEvent, 250);
 
             exitCode = 0;
 #pragma warning(suppress : 6001)
-            exitCodeValid = GetExitCodeProcess(processHandle, &exitCode);
+            exitCodeValid = GetExitCodeProcess((HANDLE)processHandle, &exitCode);
 
             if (!exitCodeValid)
             {
@@ -404,7 +422,7 @@ void SvcWatchDog::Run()
             }
         }
 
-        if (processHandle)
+        if (processHandle >= 0)
         {
             if (exitCode == STILL_ACTIVE)
             {
@@ -413,9 +431,9 @@ void SvcWatchDog::Run()
             }
 
             // try to terminate the child process in any case - better safe than sorry
-            TerminateProcess(processHandle, 0);
+            TerminateProcess((HANDLE)processHandle, 0);
             Sleep(200);
-            CloseHandle(processHandle);
+            CloseHandle((HANDLE)processHandle);
         }
 
         LOGSTR(m_isRunning ? Warning : Information)

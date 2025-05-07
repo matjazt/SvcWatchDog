@@ -19,4 +19,7 @@ copy /y ..\x64\Release\SvcWatchDog.exe %OUTPUTFOLDER%\SvcWatchDog
 copy /y ..\SvcWatchDog.json %OUTPUTFOLDER%\SvcWatchDog
 copy TestService.ps1 %OUTPUTFOLDER%\TestService
 
+copy /y ..\LICENSE* %OUTPUTFOLDER%\Doc
+copy /y ..\*.md %OUTPUTFOLDER%\Doc
+
 pause

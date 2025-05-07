@@ -1,8 +1,7 @@
-SvcWatchDog is based on PJ Naughter's CNTService class, which is a wrapper
-around the Windows Service API. You can find more information about it here:
-http://www.naughter.com/serv.html
+Windows service integration is based on PJ Naughter's CNTService class, which
+is a wrapper around the Windows Service API. You can find more information
+about it here: http://www.naughter.com/serv.html
 Fragments of CNTService code were used with explicit permission by the
-author. Thanks to PJ Naughter ( http://www.naughter.com/ ) for his work and
-for allowing us to use it!
+author. Thank you!
 
 

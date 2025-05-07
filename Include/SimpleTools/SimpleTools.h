@@ -1,3 +1,11 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
+ *
+ * Permission is hereby granted, free of charge, ... (standard MIT license).
+ */
+
 #ifndef _SIMPLETOOLS_H_
 #define _SIMPLETOOLS_H_
 

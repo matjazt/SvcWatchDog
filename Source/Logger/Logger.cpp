@@ -1,3 +1,10 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
+ *
+ * Permission is hereby granted, free of charge, ... (standard MIT license).
+ */
 
 #include <JsonConfig/JsonConfig.h>
 #include <Logger/Logger.h>
@@ -35,13 +42,22 @@ void Logger::Config(JsonConfig& cfg, const string& section)
 {
     m_minConsoleLevel = (LogLevel)cfg.GetNumber(section, "consoleLevel", (int)LogLevel::Verbose);
     m_minFileLevel = (LogLevel)cfg.GetNumber(section, "fileLevel", (int)LogLevel::Verbose);
-    m_filePath = filesystem::absolute(cfg.GetString(section, "filePath", ""));
+    string filePath = cfg.GetString(section, "filePath", "");
+    if (filePath.empty())
+    {
+        // if no file path is provided, disable file logging
+        m_minFileLevel = MaskAllLogs;
+    }
+    else
+    {
+        // if the file path is provided, make sure it is absolute
+        m_filePath = filesystem::absolute(filePath);
+        filesystem::create_directories(m_filePath.parent_path());  // create the directory if it doesn't exist
+    }
     m_maxFileSize = cfg.GetNumber(section, "maxFileSize", 20 * 1024 * 1024);
     m_maxOldFiles = cfg.GetNumber(section, "maxOldFiles", 0);
     m_maxWriteDelay = cfg.GetNumber(section, "maxWriteDelay", 500);
     m_logThreadId = cfg.GetBool(section, "logThreadId", false);
-
-    filesystem::create_directories(m_filePath.parent_path());  // create the directory if it doesn't exist
 }
 
 void Logger::Start()
@@ -114,11 +130,11 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     char threadIdPrefix[16] = "";
     if (m_logThreadId)
     {
-        // get the thread id
-        uint64_t threadIdHash = std::hash<std::thread::id>{}(std::this_thread::get_id());
-// convert it to a string
+        // get the thread id - we deliberately truncate the hash to 32 bits, because it should be good enough for our purposes.
+        uint32_t threadIdHash = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
+        // convert it to a string
 #pragma warning(suppress : 6031)
-        snprintf(threadIdPrefix, sizeof(threadIdPrefix), "%08llx: ", threadIdHash);
+        snprintf(threadIdPrefix, sizeof(threadIdPrefix), "%08x: ", threadIdHash);
         AUTO_TERMINATE(threadIdPrefix);
     }
     else
@@ -129,7 +145,7 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     // this seems to be the fastest way to get a string representation of the thread id
 
     // put all data into a single log string, including trailing newline
-    size_t maxSize = message.length() + locationPrefix.length() + 50;  // 50 - timestamp, log level etc
+    size_t maxSize = message.length() + locationPrefix.length() + 60;  // 60 - timestamp, log level, threadId etc
     string fullMessage;
     fullMessage.resize(maxSize);  // 50 - timestamp, log level etc
     size_t actualLength =
@@ -165,14 +181,15 @@ void Logger::Msg(LogLevel level, const char* pszFmt, ...)
         return;
     }
 
-    // prepare text, then use GenLogMsg_Fixed
+    va_list p;
+    va_start(p, pszFmt);
+
+    // prepare text, then use fixed string Log method
     int maxSize = 5000;
     string message;
     message.resize(maxSize);
 
-    va_list p;
-    va_start(p, pszFmt);
-    int actualLength = vsnprintf(&message[0], maxSize - 1, pszFmt, p);
+    int actualLength = _vsnprintf(&message[0], maxSize - 1, pszFmt, p);
     va_end(p);
     message.resize(actualLength);
 
@@ -193,7 +210,24 @@ void Logger::Thread()
             }
         }
 
-        Flush();
+        try
+        {
+            Flush();
+        }
+        catch (const std::exception& e)
+        {
+            // we can't afford to properly log exceptions here, because it might push us into a loop.
+            cerr << "Logger::Thread: exception while flushing log queue: " << e.what() << endl;
+            // For the time being, we're just catching the exception and hope it was temporary.
+            // TODO: fix this, obviously
+        }
+        catch (...)
+        {
+            // we can't afford to properly log exceptions here, because it might push us into a loop.
+            cerr << "Logger::Thread: exception while flushing log queue" << endl;
+            // For the time being, we're just catching the exception and hope it was temporary.
+            // TODO: fix this, obviously
+        }
     }
 }
 
