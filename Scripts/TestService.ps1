@@ -33,7 +33,7 @@ else {
     "SHUTDOWN_EVENT environment variable not set, continuing forever."  | Logger
 }
 
-$interval = 1
+$interval = 3
  
 while ($true) {
     if (-not $shutdownEventName) {
@@ -46,7 +46,7 @@ while ($true) {
     }
 
     # Test case: increase interval so it gradually becomes too long so the watchdog restarts the service
-    $interval += 1
+    # $interval += 1
 
     # Write to the log file
     "working hard" | Logger
