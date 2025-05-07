@@ -15,7 +15,7 @@ The utility is designed to be lightweight and simple to use. It consists of a si
 
 ## Download
 
-You can download the precompiled utility (x64) from the **Releases** section of the GitHub repository: <https://github.com/matjazt/**SvcWatchDog**/releases>
+You can download the precompiled utility (x64) from the **Releases** section of the GitHub repository: <https://github.com/matjazt/SvcWatchDog/releases>
 
 ## How to use  
 
@@ -81,8 +81,8 @@ Additionally, the watchdogTimeout should be set to **at least twice the interval
 
 ## Application considerations
 
-You can run virtually any non-interactive application as a Windows service using **SvcWatchDog**. The application does not need to be aware of **SvcWatchDog**, but without explicit integration, features like **graceful shutdown** and** UDP ping monitoring** will not be available.
-The following sections explain how to implement graceful shutdown and UDP ping monitoring in your application. You are encouraged to explore** TestService.ps1**, a short PowerShell demo script that demonstrates full integration with **SvcWatchDog**.
+You can run virtually any non-interactive application as a Windows service using **SvcWatchDog**. The application does not need to be aware of **SvcWatchDog**, but without explicit integration, features like **graceful shutdown** and **UDP ping monitoring** will not be available.
+The following sections explain how to implement graceful shutdown and UDP ping monitoring in your application. You are encouraged to explore **TestService.ps1**, a short PowerShell demo script that demonstrates full integration with **SvcWatchDog**.
 
 ### Graceful shutdown
 To enable graceful shutdown, your application must monitor the global Win32 event created by **SvcWatchDog**. The event name is provided to the application via the `SHUTDOWN_EVENT` environment variable.
