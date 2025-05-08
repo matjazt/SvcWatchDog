@@ -10,7 +10,7 @@ It is programmed in C++ and is designed to be as independent as possible, while 
 To verify the application's operational status, **SvcWatchDog** can listen for **UDP pings** sent by the application at regular intervals. If a ping is not received within the defined timeout, the watchdog assumes the application has become unresponsive and restarts it — helping to recover from hangs or silent failures that do not result in termination.  
 
 Unlike a full-fledged service manager, **SvcWatchDog** is designed to run only a **single application per instance**. However, **multiple instances** can operate simultaneously, each configured separately with distinct names and configuration files. Each instance runs as an independent Windows service, making it possible to manage multiple applications using **SvcWatchDog**.
-Both configuration and service files can be bundled with your software, allowing **SvcWatchDog** to operate discreetly in the background — except for the MIT license requirements, which must be acknowledged.
+Both configuration and service files can be bundled with your software, allowing **SvcWatchDog** to operate discreetly in the background.
 
 ## Features
 
