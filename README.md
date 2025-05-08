@@ -1,10 +1,19 @@
 ﻿# SvcWatchDog
-[**SvcWatchDog**](https://github.com/matjazt/**SvcWatchDog**) is a Windows utility that operates like a Win32 service, enabling the execution and monitoring of virtually any non-interactive application. By handling service-related functionality, it eliminates the need for developers to integrate their applications directly with the Win32 service system, while also enhancing reliability through robust monitoring mechanisms.  
-The program automatically detects when the application terminates and restarts it as needed. Additionally, it can be configured to listen for regular UDP "pings" from the application, confirming its operational state. If the application fails to send a ping within a defined timeframe, **SvcWatchDog** will restart it, helping to recover from unexpected hangs or crashes that do not result in termination.  
-To facilitate a controlled shutdown, **SvcWatchDog** creates a global Win32 event and shares its name with the application, allowing it to monitor the event and gracefully terminate when requested.  
-The utility is designed to be lightweight and simple to use. It consists of a single executable file and requires a single JSON configuration file.
 
-## Features  
+[**SvcWatchDog**](https://github.com/matjazt/SvcWatchDog) is a Windows utility that operates like a Win32 service, enabling the execution and monitoring of virtually any non-interactive application. By handling service-related functionality, it eliminates the need for developers to integrate their applications directly with the Win32 service system, while also enhancing reliability through robust monitoring mechanisms. 
+The utility consists of a single executable file and requires a single JSON configuration file.
+It is programmed in C++ and is designed to be as independent as possible, while remaining easy to integrate into your software.
+
+## How it works
+
+**SvcWatchDog** integrates seamlessly with the Windows services system, functioning as a dedicated Windows service. It manages the lifecycle of a configured application, ensuring that it starts and stops in sync with the Windows service. Additionally, it continuously monitors the application's state, **automatically restarting** it if an unexpected termination occurs.
+To verify the application's operational status, **SvcWatchDog** can listen for **UDP pings** sent by the application at regular intervals. If a ping is not received within the defined timeout, the watchdog assumes the application has become unresponsive and restarts it — helping to recover from hangs or silent failures that do not result in termination.  
+
+Unlike a full-fledged service manager, **SvcWatchDog** is designed to run only a **single application per instance**. However, **multiple instances** can operate simultaneously, each configured separately with distinct names and configuration files. Each instance runs as an independent Windows service, making it possible to manage multiple applications using **SvcWatchDog**.
+Both configuration and service files can be bundled with your software, allowing **SvcWatchDog** to operate discreetly in the background — except for the MIT license requirements, which must be acknowledged.
+
+## Features
+
 - Windows service integration  
 - Auto-restart applications  
 - Support for graceful shutdown  
@@ -17,17 +26,20 @@ The utility is designed to be lightweight and simple to use. It consists of a si
 
 You can download the precompiled utility (x64) from the **Releases** section of the GitHub repository: <https://github.com/matjazt/SvcWatchDog/releases>
 
-## How to use  
+## How to use
 
+Preparation steps:
 - Build **SvcWatchDog**.exe from source or download binary version (see the **Download** section). 
 - Rename it to your desired service name (e.g., *MyService.SvcWatchDog.exe*)  
 - Create a configuration file named *MyService.SvcWatchDog.json* in the same directory as the executable. See the **Configuration file** section below.  
-- Install the service using the command: `MyService.SvcWatchDog.exe -install`
+
+Installation steps (**Admin credentials required**):
+- Install the service using the command: `MyService.SvcWatchDog.exe -install`. Once the service is installed, the **SvcWatchDog** executable and JSON configuration files must remain in the same folder where they were located during installation. Moving them elsewhere may disrupt functionality.
 - Start the service using the command: `net start MyService.SvcWatchDog` or by using the Windows Services management console (services.msc).  
 - To stop the service, use the command: `net stop MyService.SvcWatchDog` or the Windows Services management console.  
 - To uninstall the service, use the command: `MyService.SvcWatchDog.exe -uninstall`.  
 
-## Configuration file  
+## Configuration file
 
 The configuration file should have the same name as the executable, but with a **.json** extension. It should be placed in the same directory as the executable. The file is in JSON format and contains sections and parameters, described below.  
 Please note that if you make a mistake in the JSON syntax, **SvcWatchDog** may not start or may behave unexpectedly. It is recommended to validate the file after each change, simply by running the **SvcWatchDog** executable without any parameters. If the file is not valid, **SvcWatchDog** will print an error message and exit.  
@@ -109,6 +121,16 @@ The disclaimer for this library is included in file [LICENSE-jsonhpp](LICENSE-js
 
 ## Future plans
 - Add support for SMTP alerting.
+
+## Competition
+There are several alternatives to **SvcWatchDog** available, including:
+- https://github.com/luisperezphd/RunAsService
+- https://nssm.cc
+- https://github.com/kflu/serman
+- https://github.com/winsw/winsw
+- https://sysprogs.com/legacy/tools/srvman/
+
+Each of these projects is a bit different, so you may want to explore them to find the one that best fits your needs.
 
 ## Contact
 
