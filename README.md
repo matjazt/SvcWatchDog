@@ -56,7 +56,7 @@ Please note that if you make a mistake in the JSON syntax, **SvcWatchDog** may n
     "maxWriteDelay": 500,
     "logThreadId": false
   },
-  "SvcWatchDog": {
+  "svcWatchDog": {
     "workDir": "..",
     "args": [ "powershell.exe", "-ExecutionPolicy", "Unrestricted", "-File", "TestService\\TestService.ps1" ],
     "usePath": true,
