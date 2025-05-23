@@ -393,7 +393,7 @@ void SvcWatchDog::Run()
 
         while (processHandle >= 0 && exitCode == STILL_ACTIVE && (m_killTime == 0 || m_killTime > now))
         {
-            WaitForSingleObject(m_loopTriggerEvent, 250);
+            WaitForSingleObject(m_loopTriggerEvent, 200);
 
             exitCode = 0;
 #pragma warning(suppress : 6001)
@@ -434,7 +434,7 @@ void SvcWatchDog::Run()
 
             // try to terminate the child process in any case - better safe than sorry
             TerminateProcess((HANDLE)processHandle, 0);
-            Sleep(200);
+            Sleep(50);
             CloseHandle((HANDLE)processHandle);
         }
 
