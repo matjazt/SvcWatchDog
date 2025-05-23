@@ -12,7 +12,7 @@ To verify the application's operational status, **SvcWatchDog** can listen for *
 Unlike a full-fledged service manager, **SvcWatchDog** is designed to run only a **single application per instance**. However, **multiple instances** can operate simultaneously, each configured separately with distinct names and configuration files. Each instance runs as an independent Windows service, making it possible to manage multiple applications using **SvcWatchDog**.
 Both configuration and service files can be bundled with your software, allowing **SvcWatchDog** to operate discreetly in the background.
 
-See [**NotificationServer**](https://github.com/matjazt/NotificationServer) demo project for a practical example of how to integrate **SvcWatchDog** with a C# application.
+See [**NotificationServer**](https://github.com/matjazt/NotificationServer) and [**SvcWatchDogClientDemo**](https://github.com/matjazt/SvcWatchDogClientDemo) demo projects for a practical example of how to integrate **SvcWatchDog** with a C# or Python application.
 
 ## Features
 
