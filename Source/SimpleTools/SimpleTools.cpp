@@ -9,7 +9,7 @@
 #include <SimpleTools/SimpleTools.h>
 #include <fstream>
 
-string loadTextFile(const filesystem::path& filePath)
+string LoadTextFile(const filesystem::path& filePath)
 {
     // Check if the file exists and is a regular file
     if (!filesystem::exists(filePath) || !filesystem::is_regular_file(filePath))
@@ -77,7 +77,7 @@ string NumberFormat(T num, const char* formatString)
 }
 
 // helper function to split a string by delimiter
-vector<string> split(const string& str, char delimiter)
+vector<string> Split(const string& str, char delimiter)
 {
     vector<std::string> tokens;
     size_t start = 0, end = 0;
@@ -90,3 +90,62 @@ vector<string> split(const string& str, char delimiter)
     tokens.push_back(str.substr(start));  // Add last token
     return tokens;
 }
+
+// SyncEvent class implementation
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SyncEvent::SyncEvent(bool initialState, bool autoReset)
+{
+    m_signaled = initialState;
+    m_autoReset = autoReset;
+}
+
+bool SyncEvent::SetEvent()
+{
+    lock_guard<mutex> lock(m_mtx);
+    bool wasSignaled = m_signaled;
+    m_signaled = true;
+    if (m_autoReset)
+    {
+        // Notify one waiting thread if auto-reset is enabled
+        m_cv.notify_one();
+    }
+    else
+    {
+        // Notify all waiting threads if auto-reset is disabled
+        m_cv.notify_all();
+    }
+    return wasSignaled == false;
+}
+
+bool SyncEvent::ResetEvent()
+{
+    lock_guard<mutex> lock(m_mtx);
+    bool wasSignaled = m_signaled;
+    m_signaled = false;
+    return wasSignaled;
+}
+
+void SyncEvent::WaitForSingleEvent()
+{
+    unique_lock<mutex> lock(m_mtx);
+    m_cv.wait(lock, [this]() { return m_signaled; });
+    if (m_autoReset)
+    {
+        m_signaled = false;  // Reset the event if auto-reset is enabled
+    }
+}
+
+bool SyncEvent::WaitForSingleEvent(int milliseconds)
+{
+    unique_lock<mutex> lock(m_mtx);
+    bool success = m_cv.wait_for(lock, chrono::milliseconds(milliseconds), [this]() { return m_signaled; });
+    if (success && m_autoReset)
+    {
+        m_signaled = false;  // Reset the event if auto-reset is enabled
+    }
+    return success;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////

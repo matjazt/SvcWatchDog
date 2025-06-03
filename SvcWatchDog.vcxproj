@@ -226,6 +226,7 @@
     <ClCompile Include="Source\SvcWatchDog\SvcWatchDog.cpp" />
     <ClCompile Include="Source\SvcWatchDog\Main.cpp" />
     <ClCompile Include="Source\Logger\Logger.cpp" />
+    <ClCompile Include="Source\Test\SyncEventTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\JsonConfig\JsonConfig.h" />
@@ -234,6 +235,7 @@
     <ClInclude Include="Include\SvcWatchDog\resource.h" />
     <ClInclude Include="Include\SvcWatchDog\SvcWatchDog.h" />
     <ClInclude Include="Include\Logger\Logger.h" />
+    <ClInclude Include="Include\Test\SyncEventTest.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ChangeLog.md" />
@@ -243,7 +245,9 @@
     <None Include="README.md" />
     <None Include="Scripts\pack.bat" />
     <None Include="Scripts\TestService.ps1" />
-    <None Include="SvcWatchDog.json" />
+    <None Include="SvcWatchDog.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Include\SvcWatchDog\SvcWatchDog.rc" />

@@ -66,7 +66,7 @@ class Logger : public NoCopy
     bool m_mute;
     unique_ptr<queue<string>> m_queue;
     thread m_thread;
-    timed_mutex m_threadLoopMutex;
+    SyncEvent m_threadTrigger;
     bool m_running;
 
     mutex m_cs;
@@ -79,6 +79,14 @@ class Logger : public NoCopy
 #define Lg (*Logger::GetInstance())
 #define LOGSTR(...) LoggerStream().GetEx(__FILE__, __FUNCTION__, __VA_ARGS__)  // optional log level
 #define LOGMSG(LEVEL, MSG) Logger::GetInstance()->Log((LEVEL), (MSG), __FILE__, __FUNCTION__);
+#define LOGASSERT(CONDITION)                                                                                               \
+    do                                                                                                                     \
+    {                                                                                                                      \
+        if (!(CONDITION))                                                                                                  \
+        {                                                                                                                  \
+            Logger::GetInstance()->Log(Fatal, "assertion failure at line " + to_string(__LINE__), __FILE__, __FUNCTION__); \
+        }                                                                                                                  \
+    } while (0)
 
 class LoggerStream : public NoCopy
 {

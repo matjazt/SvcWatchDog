@@ -102,7 +102,7 @@ void SvcWatchDog::Configure()
             {
                 char* achPath = getenv("PATH");
                 LOGSTR() << "searching path " << achPath;
-                auto pathDirectories = split(achPath, ';');
+                auto pathDirectories = Split(achPath, ';');
                 bool targetFound = false;
                 for (const string& dir : pathDirectories)
                 {

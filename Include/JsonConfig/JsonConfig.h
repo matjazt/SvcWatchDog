@@ -25,7 +25,7 @@ class JsonConfig : public NoCopy
     static JsonConfig* GetInstance();
     static void SetInstance(JsonConfig* instance);
 
-    void load(const filesystem::path& filePath);
+    void Load(const filesystem::path& filePath);
     json* GetJson();
 
     string GetString(const string& section, const string& key, const string& defaultValue = "");

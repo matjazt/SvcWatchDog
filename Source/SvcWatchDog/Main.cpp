@@ -11,6 +11,7 @@
 #include <Logger/Logger.h>
 #include <conio.h>
 #include <iostream>
+#include <Test/SyncEventTest.h>
 
 #pragma comment(lib, "ws2_32.lib")  // Link with Winsock library
 
@@ -41,7 +42,7 @@ int main(int argc, char* argv[])
         JsonConfig::SetInstance(&cfg);
         try
         {
-            cfg.load(cfgPath);
+            cfg.Load(cfgPath);
         }
         catch (const std::exception& e)
         {
@@ -73,6 +74,9 @@ int main(int argc, char* argv[])
         // When we get here, the service has been stopped
         returnCode = cService.m_serviceStatus.dwWin32ExitCode;
         LOGSTR() << "exiting with result code " << returnCode;
+
+        // SyncEventTest(false);
+        // SyncEventTest(true);
     }
 
     WSACleanup();

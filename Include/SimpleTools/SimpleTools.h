@@ -11,6 +11,7 @@
 
 #include <string>
 #include <filesystem>
+#include <mutex>
 
 using namespace std;
 
@@ -56,11 +57,12 @@ using namespace std;
 #define EMPTYIFNULL(s) ((s) ? (s) : "")
 #define NULLOREMPTY(s) ((s) == nullptr || *(s) == 0)
 
-string loadTextFile(const filesystem::path& filePath);
+string LoadTextFile(const filesystem::path& filePath);
 
 void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds);
 
 uint64_t SteadyTime();
+#define SLEEP(MILLISECONDS) std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS))
 
 class NoCopy
 {
@@ -77,7 +79,7 @@ string NumberFormat(T num, const char* formatString);
 #define FLOATFULL(f) NumberFormat((f), "%3.17lf")
 #define BOOL2STR(b) ((b) ? "true" : "false")
 
-vector<string> split(const string& str, char delimiter);
+vector<string> Split(const string& str, char delimiter);
 
 #ifdef WIN32
 
@@ -153,5 +155,64 @@ int GetModuleFileName(void* pDummy, char* achBuf, int iBufLen);
 #define _timeb struct timeb
 
 #endif
+
+/**
+ * @class SyncEvent
+ * @brief A thread synchronization primitive that mimics the behavior of Win32 event objects.
+ * It allows threads to wait for or signal events.
+ *
+ * SyncEvent provides a mechanism for threads to wait until an event is signaled.
+ * It supports both manual-reset and auto-reset modes:
+ * - In manual-reset mode, the event remains signaled until explicitly reset.
+ * - In auto-reset mode, the event automatically resets after releasing a single waiting thread.
+ *
+ * Typical usage:
+ * - One or more threads call WaitForSingleEvent() to wait for the event to be signaled.
+ * - Another thread calls SetEvent() to signal the event, releasing waiting threads.
+ * - ResetEvent() can be used to reset the event to the non-signaled state (manual-reset mode).
+ *
+ * @note This class is thread-safe.
+ */
+class SyncEvent : public NoCopy
+{
+   public:
+    /**
+     * @brief Constructs a SyncEvent.
+     * @param initialState Initial signaled state of the event.
+     * @param autoReset If true, event is auto-reset; otherwise, manual-reset.
+     */
+    SyncEvent(bool initialState, bool autoReset);
+
+    /**
+     * @brief Sets the event to the signaled state.
+     *        Wakes one or all waiting threads depending on auto-reset mode.
+     * @return true if the event was not signaled before the call, false if it was already signaled.
+     */
+    bool SetEvent();
+
+    /**
+     * @brief Resets the event to the non-signaled state.
+     * @return true if the event was signaled before the call, false if it was already non-signaled.
+     */
+    bool ResetEvent();
+
+    /**
+     * @brief Waits indefinitely for the event to become signaled.
+     */
+    void WaitForSingleEvent();
+
+    /**
+     * @brief Waits for the event to become signaled or until timeout.
+     * @param milliseconds Timeout in milliseconds.
+     * @return true if the event was signaled, false if timeout occurred.
+     */
+    bool WaitForSingleEvent(int milliseconds);
+
+   private:
+    bool m_autoReset;
+    mutex m_mtx;
+    condition_variable m_cv;
+    bool m_signaled;
+};
 
 #endif

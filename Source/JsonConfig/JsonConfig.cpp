@@ -22,9 +22,9 @@ JsonConfig::~JsonConfig() {}
 JsonConfig* JsonConfig::GetInstance() { return m_instance; }
 void JsonConfig::SetInstance(JsonConfig* instance) { m_instance = instance; }
 
-void JsonConfig::load(const filesystem::path& filePath)
+void JsonConfig::Load(const filesystem::path& filePath)
 {
-    string jsonText = loadTextFile(filePath);
+    string jsonText = LoadTextFile(filePath);
     try
     {
         m_json = json::parse(jsonText);

@@ -13,10 +13,6 @@
 #include <fstream>
 #include <cstdarg>
 
-// using mutex as an event - with separate lock and unlock
-#pragma warning(disable : 26110)
-#pragma warning(disable : 26111)
-
 Logger* Logger::m_instance = nullptr;
 
 Logger::Logger()
@@ -27,6 +23,7 @@ Logger::Logger()
       m_maxWriteDelay(0),
       m_maxOldFiles(0),
       m_mute(false),
+      m_threadTrigger(false, true),  // initialize the event with auto-reset, although it's not strictly necessary here
       m_running(false)
 {
     m_queue = std::make_unique<queue<string>>();  // use unique_ptr to manage the queue
@@ -65,7 +62,6 @@ void Logger::Start()
     if (!m_running)
     {
         m_running = true;
-        m_threadLoopMutex.lock();
         m_thread = thread(&Logger::Thread, this);
 
         LOGSTR() << "consoleLevel=" << m_minConsoleLevel << ", fileLevel=" << m_minFileLevel << ", filePath=" << m_filePath.string()
@@ -80,7 +76,7 @@ void Logger::Shutdown()
     {
         LOGSTR() << "shutting down";
         m_running = false;
-        m_threadLoopMutex.unlock();
+        m_threadTrigger.SetEvent();  // signal the thread to wake up and finish
         m_thread.join();
     }
 }
@@ -200,13 +196,16 @@ void Logger::Thread()
 {
     while (m_running)
     {
-        if (m_threadLoopMutex.try_lock_for(chrono::milliseconds(m_maxWriteDelay)))
+        if (m_threadTrigger.WaitForSingleEvent(m_maxWriteDelay))
         {
             if (m_running)
             {
-                // strange - lock succeeded although we're not shutting down
-                // let's sleep for a while to prevent busy waiting
-                this_thread::sleep_for(chrono::milliseconds(m_maxWriteDelay));
+                // strange - the wait succeeded although we're not shutting down
+                // let's sleep for a while to prevent busy waiting (not really needed)
+                SLEEP(m_maxWriteDelay);
+
+                // NOTE: this should never happen, hence assert
+                assert(0);
             }
         }
 
