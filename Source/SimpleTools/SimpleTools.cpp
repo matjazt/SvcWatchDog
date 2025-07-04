@@ -1,13 +1,21 @@
-/*
+﻿/*
  * MIT License
  *
- * Copyright (c) 2025 Matja� Terpin (mt.dev@gmx.com)
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
  *
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  */
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <limits.h>
+#endif
+
 #include <SimpleTools/SimpleTools.h>
 #include <fstream>
+#include <filesystem>
 
 string LoadTextFile(const filesystem::path& filePath)
 {
@@ -55,6 +63,35 @@ uint64_t SteadyTime()
     return duration.count();
 }
 
+string GetExecutableName()
+{
+    char path[MAX_PATH];
+#ifdef _WIN32
+    GetModuleFileNameA(NULL, path, sizeof(path) - 1);
+#else
+    // TODO: not tested on linux
+    ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+    if (len <= 0)
+    {
+        return "unknown";
+    }
+#endif
+    return std::filesystem::path(path).stem().string();
+}
+
+string GetHostname()
+{
+    char hostname[256];
+#ifdef _WIN32
+    DWORD size = sizeof(hostname);
+    bool ok = GetComputerNameA(hostname, &size);
+#else
+    // TODO: not tested on linux
+    bool ok = gethostname(hostname, sizeof(hostname)) == 0;
+#endif
+    return ok ? hostname : "unknown";
+}
+
 #ifdef WIN32
 
 _CrtMemState g_memChkPoint1;
@@ -90,6 +127,35 @@ vector<string> Split(const string& str, char delimiter)
     tokens.push_back(str.substr(start));  // Add last token
     return tokens;
 }
+
+string JoinStrings(const vector<string>& words, const string& delimiter)
+{
+    string result;
+    for (const string& word : words)
+    {
+        if (!result.empty())
+        {
+            result += delimiter;  // Add delimiter before the next word
+        }
+        result += word;
+    }
+    return result;
+}
+
+string TrimEx(const string& str, const string& leftTrimChars, const string& rightTrimChars)
+{
+    size_t start = str.find_first_not_of(leftTrimChars);
+    if (start == string::npos) return "";  // All characters are trimmed
+    size_t end = str.find_last_not_of(rightTrimChars);
+    if (end == string::npos) return str.substr(start);  // No right trim
+    return str.substr(start, end - start + 1);
+}
+
+string Trim(const string& str, const string& trimChars) { return TrimEx(str, trimChars, trimChars); }
+
+string TrimLeft(const string& str, const string& trimChars) { return TrimEx(str, trimChars, ""); }
+
+string TrimRight(const string& str, const string& trimChars) { return TrimEx(str, "", trimChars); }
 
 // SyncEvent class implementation
 //

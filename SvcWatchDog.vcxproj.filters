@@ -11,6 +11,9 @@
     <Filter Include="Scripts">
       <UniqueIdentifier>{53087ca8-54a5-4c35-95fd-9a540f6d3978}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Test">
+      <UniqueIdentifier>{9832bbe9-05d2-4580-a54e-162925177a2a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Logger\Logger.cpp">
@@ -28,6 +31,15 @@
     <ClCompile Include="Source\SimpleTools\SimpleTools.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
+    <ClCompile Include="Source\EMail\EmailSender.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\CryptoTools\CryptoTools.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Test\SyncEventTest.cpp">
+      <Filter>Test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Logger\Logger.h">
@@ -35,9 +47,6 @@
     </ClInclude>
     <ClInclude Include="Include\SvcWatchDog\SvcWatchDog.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\nlohmann\json.hpp">
-      <Filter>Tools</Filter>
     </ClInclude>
     <ClInclude Include="Include\JsonConfig\JsonConfig.h">
       <Filter>Tools</Filter>
@@ -48,9 +57,15 @@
     <ClInclude Include="Include\SvcWatchDog\resource.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Test\SyncEventTest.h" />
+    <ClInclude Include="Include\EMail\EmailSender.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\CryptoTools\CryptoTools.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="SvcWatchDog.json" />
     <None Include="Scripts\TestService.ps1">
       <Filter>Scripts</Filter>
     </None>
@@ -62,6 +77,10 @@
     <None Include="LICENSE-CNTService" />
     <None Include="LICENSE-jsonhpp" />
     <None Include="ChangeLog.md" />
+    <None Include="vcpkg.json" />
+    <None Include="vcpkg-configuration.json" />
+    <None Include="SvcWatchDog.json" />
+    <None Include="SvcWatchDog.private.json" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Include\SvcWatchDog\SvcWatchDog.rc">

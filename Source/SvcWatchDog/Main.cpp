@@ -1,7 +1,7 @@
-/*
+﻿/*
  * MIT License
  *
- * Copyright (c) 2025 Matja� Terpin (mt.dev@gmx.com)
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
  *
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  */
@@ -11,13 +11,14 @@
 #include <Logger/Logger.h>
 #include <conio.h>
 #include <iostream>
-#include <Test/SyncEventTest.h>
 
 #pragma comment(lib, "ws2_32.lib")  // Link with Winsock library
 
 int main(int argc, char* argv[])
 {
-    DbgMemCheckPoint1();
+    // NOTE: this seems to be far better option than _CrtDumpMemoryLeaks(), because it checks the memory leaks later in the
+    // shutdown process, thus not showing false leaks for Botan library, for example.
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
     int returnCode;
     {
@@ -32,7 +33,7 @@ int main(int argc, char* argv[])
         // figure out the configuration file path - it should be exactly the same as
         // the executable name, but with a .json extension
         char tmp[1000] = "";
-        ::GetModuleFileName(nullptr, tmp, sizeof(tmp) - 1);
+        GetModuleFileNameA(nullptr, tmp, sizeof(tmp) - 1);
         AUTO_TERMINATE(tmp);
 
         auto exePath = filesystem::path(tmp);
@@ -55,7 +56,7 @@ int main(int argc, char* argv[])
 
         Logger logger;
         Logger::SetInstance(&logger);
-        Lg.Config(Cfg, "log");
+        Lg.Configure(Cfg, "log");
         Lg.Start();
 
         // now we can configure the service, because the logger is ready
@@ -74,17 +75,9 @@ int main(int argc, char* argv[])
         // When we get here, the service has been stopped
         returnCode = cService.m_serviceStatus.dwWin32ExitCode;
         LOGSTR() << "exiting with result code " << returnCode;
-
-        // SyncEventTest(false);
-        // SyncEventTest(true);
     }
 
     WSACleanup();
-
-    DbgMemCheckPoint2();
-    DbgMemCompareChkPoints();
-
-    // _getch();
 
     return returnCode;
 }

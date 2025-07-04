@@ -13,3 +13,5 @@
 /SvcWatchDogDist
 *.aps
 *.user
+/vcpkg_installed
+/SvcWatchDog.private.json

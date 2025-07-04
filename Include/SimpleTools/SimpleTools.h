@@ -1,7 +1,7 @@
-/*
+﻿/*
  * MIT License
  *
- * Copyright (c) 2025 Matja� Terpin (mt.dev@gmx.com)
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
  *
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  */
@@ -33,15 +33,31 @@ using namespace std;
 #define SAFE_DELETE(x)   \
     do                   \
     {                    \
-        if (x) delete x; \
-        x = nullptr;     \
+        if (x)           \
+        {                \
+            delete x;    \
+            x = nullptr; \
+        }                \
     } while (0)
 
-#define SAFE_FREE(x)    \
-    do                  \
-    {                   \
-        if (x) free(x); \
-        x = nullptr;    \
+#define SAFE_DELETE_ARRAY(x) \
+    do                       \
+    {                        \
+        if (x)               \
+        {                    \
+            delete[] x;      \
+            x = nullptr;     \
+        }                    \
+    } while (0)
+
+#define SAFE_FREE(x)     \
+    do                   \
+    {                    \
+        if (x)           \
+        {                \
+            free(x);     \
+            x = nullptr; \
+        }                \
     } while (0)
 
 #define SAFE_CLOSE_SOCKET(s)         \
@@ -64,6 +80,9 @@ void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds);
 uint64_t SteadyTime();
 #define SLEEP(MILLISECONDS) std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS))
 
+string GetExecutableName();
+string GetHostname();
+
 class NoCopy
 {
    public:
@@ -80,6 +99,11 @@ string NumberFormat(T num, const char* formatString);
 #define BOOL2STR(b) ((b) ? "true" : "false")
 
 vector<string> Split(const string& str, char delimiter);
+string JoinStrings(const vector<string>& words, const string& delimiter);
+string TrimEx(const string& str, const string& leftTrimChars, const string& rightTrimChars);
+string Trim(const string& str, const string& trimChars = " \t\n\r\f\v");
+string TrimLeft(const string& str, const string& trimChars = " \t\n\r\f\v");
+string TrimRight(const string& str, const string& trimChars = " \t\n\r\f\v");
 
 #ifdef WIN32
 
@@ -95,20 +119,6 @@ vector<string> Split(const string& str, char delimiter);
 
 #define O_SYNC 0
 #define strcasecmp stricmp
-
-// memory debug tools
-extern _CrtMemState g_memChkPoint1;
-extern _CrtMemState g_memChkPoint2;
-extern _CrtMemState g_memDiff;
-#define DbgMemCheckPoint1() _CrtMemCheckpoint(&g_memChkPoint1)
-#define DbgMemCheckPoint2() _CrtMemCheckpoint(&g_memChkPoint2)
-#define DbgMemCompareChkPoints()                                         \
-    do                                                                   \
-    {                                                                    \
-        _CrtMemDifference(&g_memDiff, &g_memChkPoint1, &g_memChkPoint2); \
-        _CrtMemDumpStatistics(&g_memDiff);                               \
-        _CrtDumpMemoryLeaks();                                           \
-    } while (0)
 
 #endif
 
@@ -136,11 +146,6 @@ extern _CrtMemState g_memDiff;
 
 #define _MAX_PATH 256
 #define MAX_PATH 256
-
-// memory debug
-#define DbgMemCheckPoint1()
-#define DbgMemCheckPoint2()
-#define DbgMemCompareChkPoints()
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))

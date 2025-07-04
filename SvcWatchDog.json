@@ -1,11 +1,18 @@
 {
   "log": {
-    "consoleLevel": 99,
-    "fileLevel": 0,
+    "minConsoleLevel": 99,
+    "minFileLevel": 0,
     "filePath": "log\\SvcWatchDog.log",
     "maxFileSize": 10000000,
     "maxOldFiles": 3,
     "maxWriteDelay": 500,
+    "minEmailLevel": 0,
+    "maxEmailDelay": 10,
+    "maxEmailLogs": 2000,
+    "OPTIONAL.emailSubject": "dammit Janet",
+    "DISABLED.emailSection": "email-gmail",
+    "emailRecipients": [ "janet@example.com", "brad@example.com" ],
+    "emailTimeoutOnShutdown": 2000,
     "logThreadId": false
   },
   "svcWatchDog": {
@@ -16,5 +23,21 @@
     "restartDelay": 2000,
     "shutdownTime": 3000,
     "watchdogTimeout": 7000
+  },
+  "email-gmail": {
+    "smtpServerUrl": "smtps://smtp.gmail.com:465",
+    "sslFlag": 3,
+    "defaultSourceAddress": "riff.raff at gmail.com",
+    "username": "riff.raff at gmail.com",
+    "password": "your application passkey",
+    "timeout": 10000
+  },
+  "email-gmx": {
+    "smtpServerUrl": "smtps://mail.gmx.com:465",
+    "sslFlag": 3,
+    "defaultSourceAddress": "riff raff at gmx.com",
+    "username": "riff raff at gmx.com",
+    "password": "your actual account password",
+    "timeout": 10000
   }
 }

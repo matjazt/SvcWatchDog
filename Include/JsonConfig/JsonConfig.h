@@ -1,7 +1,7 @@
-/*
+﻿/*
  * MIT License
  *
- * Copyright (c) 2025 Matja� Terpin (mt.dev@gmx.com)
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
  *
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  */

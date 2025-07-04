@@ -1,7 +1,7 @@
-/*
+﻿/*
  * MIT License
  *
- * Copyright (c) 2025 Matja� Terpin (mt.dev@gmx.com)
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
  *
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  *
@@ -18,9 +18,10 @@
 #include <JsonConfig/JsonConfig.h>
 #include <Logger/Logger.h>
 
+#include <curl/curl.h>
+
 #include <process.h>
 #include <direct.h>
-#include <stdlib.h>
 #include <iostream>
 
 SvcWatchDog* SvcWatchDog::m_instance = nullptr;
@@ -47,7 +48,7 @@ SvcWatchDog::SvcWatchDog() : m_section("svcWatchDog")
 
     // figure out paths and file names
     char tmp[1000] = "";
-    ::GetModuleFileName(nullptr, tmp, sizeof(tmp) - 1);
+    GetModuleFileNameA(nullptr, tmp, sizeof(tmp) - 1);
     AUTO_TERMINATE(tmp);
 
     m_exeFile.assign(tmp);
@@ -62,6 +63,8 @@ SvcWatchDog::SvcWatchDog() : m_section("svcWatchDog")
 
 void SvcWatchDog::Configure()
 {
+    LOGSTR(Information) << "libcurl version: " << curl_version();
+
     LOGSTR(Information) << "SvcWatchDog " << SVCWATCHDOG_VERSION << ", build timestamp: " << __DATE__ << " " << __TIME__;
     LOGSTR(Information) << "service name: " << m_serviceName;
 
@@ -483,10 +486,6 @@ bool SvcWatchDog::Install()
                                           SC_MANAGER_ALL_ACCESS);  // full access
     if (!scmHandle) return false;
 
-    // Get the executable file path
-    char filePath[_MAX_PATH];
-    ::GetModuleFileName(nullptr, filePath, sizeof(filePath) - 1);
-
     string loadOrderGroup = Cfg.GetString(m_section, "loadOrderGroup", "");
     LOGSTR(Information) << "loadOrderGroup=" << loadOrderGroup;
 
@@ -494,10 +493,11 @@ bool SvcWatchDog::Install()
     LOGSTR(Information) << "autoStart=" << BOOL2STR(autoStart);
 
     // Create the service
-    SC_HANDLE serviceHandle = ::CreateService(
-        scmHandle, m_serviceName.c_str(), m_serviceName.c_str(), SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-        autoStart ? SERVICE_AUTO_START : SERVICE_DEMAND_START,  // start condition
-        SERVICE_ERROR_NORMAL, filePath, loadOrderGroup.empty() ? nullptr : loadOrderGroup.c_str(), nullptr, nullptr, nullptr, nullptr);
+    SC_HANDLE serviceHandle =
+        ::CreateService(scmHandle, m_serviceName.c_str(), m_serviceName.c_str(), SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
+                        autoStart ? SERVICE_AUTO_START : SERVICE_DEMAND_START,  // start condition
+                        SERVICE_ERROR_NORMAL, m_exeFile.string().c_str(), loadOrderGroup.empty() ? nullptr : loadOrderGroup.c_str(),
+                        nullptr, nullptr, nullptr, nullptr);
 
     if (!serviceHandle)
     {

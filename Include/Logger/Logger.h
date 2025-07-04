@@ -1,7 +1,7 @@
-/*
+﻿/*
  * MIT License
  *
- * Copyright (c) 2025 Matja� Terpin (mt.dev@gmx.com)
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
  *
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  */
@@ -12,6 +12,7 @@
 #include <JsonConfig/JsonConfig.h>
 #include <queue>
 #include <sstream>
+#include <Email/EmailSender.h>
 
 enum LogLevel
 {
@@ -46,7 +47,7 @@ class Logger : public NoCopy
     static Logger* GetInstance();
     static void SetInstance(Logger* instance);
 
-    void Config(JsonConfig& cfg, const string& section);
+    void Configure(JsonConfig& cfg, const string& section);
     void Start();
     void Shutdown();
     void Mute(bool mute);
@@ -59,12 +60,23 @@ class Logger : public NoCopy
     LogLevel m_minConsoleLevel;
     LogLevel m_minFileLevel;
     filesystem::path m_filePath;
-    bool m_logThreadId;
     int m_maxFileSize;
     int m_maxWriteDelay;
     size_t m_maxOldFiles;
+    LogLevel m_minEmailLevel;
+    string m_emailSection;
+    vector<string> m_emailRecipients;
+    string m_emailSubject;
+    int m_maxEmailDelay;
+    int m_maxEmailLogs;
+    int m_emailTimeoutOnShutdown;
+    bool m_logThreadId;
+
     bool m_mute;
-    unique_ptr<queue<string>> m_queue;
+    unique_ptr<queue<string>> m_fileQueue;
+    EmailSender m_emailSender;
+    unique_ptr<queue<string>> m_emailQueue;
+    uint64_t m_emailTimestamp;
     thread m_thread;
     SyncEvent m_threadTrigger;
     bool m_running;
@@ -73,7 +85,10 @@ class Logger : public NoCopy
 
     string GetLocationPrefix(const char* file, const char* func);
     void Thread();
-    void Flush();
+    void Flush(bool force);
+    void FlushFileQueue();
+    void FlushEmailQueue(bool force);
+    void SendEmail(unique_ptr<queue<string>> emailQueue);
 };
 
 #define Lg (*Logger::GetInstance())
