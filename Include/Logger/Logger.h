@@ -6,8 +6,8 @@
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  */
 
-#ifndef __LOGGER_H
-#define __LOGGER_H
+#ifndef _LOGGER_H_
+#define _LOGGER_H_
 
 #include <JsonConfig/JsonConfig.h>
 #include <queue>

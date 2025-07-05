@@ -24,6 +24,9 @@
     "shutdownTime": 3000,
     "watchdogTimeout": 7000
   },
+  "cryptoTools": {
+    "passwordFile":  "\\temp\\SvcWatchDogPassword.txt"
+  },
   "email-gmail": {
     "smtpServerUrl": "smtps://smtp.gmail.com:465",
     "sslFlag": 3,

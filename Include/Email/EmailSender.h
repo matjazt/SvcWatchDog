@@ -1,5 +1,5 @@
-﻿#ifndef _EMAIL_H_
-#define _EMAIL_H_
+﻿#ifndef _EMAILSENDER_H_
+#define _EMAILSENDER_H_
 
 #include <JsonConfig/JsonConfig.h>
 

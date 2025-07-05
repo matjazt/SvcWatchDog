@@ -9,6 +9,7 @@
 #include <SvcWatchDog/SvcWatchDog.h>
 #include <JsonConfig/JsonConfig.h>
 #include <Logger/Logger.h>
+#include <CryptoTools/CryptoTools.h>
 #include <conio.h>
 #include <iostream>
 
@@ -59,6 +60,10 @@ int main(int argc, char* argv[])
         Lg.Configure(Cfg, "log");
         Lg.Start();
 
+        CryptoTools cryptoTools;
+        CryptoTools::SetInstance(&cryptoTools);
+        cryptoTools.Configure(Cfg, "cryptoTools", "A7k2TDrZkf3kMCGMmBhA");
+
         // now we can configure the service, because the logger is ready
         cService.Configure();
 
@@ -75,9 +80,13 @@ int main(int argc, char* argv[])
         // When we get here, the service has been stopped
         returnCode = cService.m_serviceStatus.dwWin32ExitCode;
         LOGSTR() << "exiting with result code " << returnCode;
+
+        // cryptoTools.SelfTest();
     }
 
     WSACleanup();
+
+    // _getch();
 
     return returnCode;
 }

@@ -28,6 +28,7 @@ Logger::Logger()
       m_emailTimeoutOnShutdown(0),
       m_logThreadId(false),
       m_mute(false),
+      m_emailTimestamp(0),
       m_threadTrigger(false, true),  // initialize the event with auto-reset, although it's not strictly necessary here
       m_running(false)
 {

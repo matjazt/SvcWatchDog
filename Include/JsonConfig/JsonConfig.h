@@ -6,8 +6,8 @@
  * Permission is hereby granted, free of charge, ... (standard MIT license).
  */
 
-#ifndef JSONCONFIG_H
-#define JSONCONFIG_H
+#ifndef _JSONCONFIG_H_
+#define _JSONCONFIG_H_
 
 #include <SimpleTools/SimpleTools.h>
 // #undef snprintf

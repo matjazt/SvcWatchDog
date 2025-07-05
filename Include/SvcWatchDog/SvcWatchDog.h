@@ -14,6 +14,9 @@
  * ==================================================================================
  */
 
+#ifndef _SVCWATCHDOG_H_
+#define _SVCWATCHDOG_H_
+
 #include <windows.h>
 #include <SimpleTools/SimpleTools.h>
 
@@ -87,3 +90,5 @@ class SvcWatchDog : public NoCopy
     // static data
     static SvcWatchDog* m_instance;
 };
+
+#endif

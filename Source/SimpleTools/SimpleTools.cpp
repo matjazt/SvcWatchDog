@@ -20,7 +20,7 @@
 string LoadTextFile(const filesystem::path& filePath)
 {
     // Check if the file exists and is a regular file
-    if (!filesystem::exists(filePath) || !filesystem::is_regular_file(filePath))
+    if (filePath.empty() || !filesystem::exists(filePath) || !filesystem::is_regular_file(filePath))
     {
         throw std::runtime_error("File does not exist or is not a valid file: " + filePath.string());
     }
@@ -91,14 +91,6 @@ string GetHostname()
 #endif
     return ok ? hostname : "unknown";
 }
-
-#ifdef WIN32
-
-_CrtMemState g_memChkPoint1;
-_CrtMemState g_memChkPoint2;
-_CrtMemState g_memDiff;
-
-#endif
 
 template <typename T>
 string NumberFormat(T num, const char* formatString)
