@@ -62,6 +62,9 @@ int main(int argc, char* argv[])
 
         CryptoTools cryptoTools;
         CryptoTools::SetInstance(&cryptoTools);
+
+        // initialize CryptoTools with a default password, in case password file is not configured in the
+        // configuration file (cryptoTools->passwordFile)
         cryptoTools.Configure(Cfg, "cryptoTools", "A7k2TDrZkf3kMCGMmBhA");
 
         // now we can configure the service, because the logger is ready
@@ -82,11 +85,15 @@ int main(int argc, char* argv[])
         LOGSTR() << "exiting with result code " << returnCode;
 
         // cryptoTools.SelfTest();
+        // cryptoTools.SelfTest();
     }
 
     WSACleanup();
 
     // _getch();
+
+    // memory leak detection test
+    // malloc(666);
 
     return returnCode;
 }

@@ -1,11 +1,17 @@
+﻿/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Matjaž Terpin (mt.dev@gmx.com)
+ *
+ * Permission is hereby granted, free of charge, ... (standard MIT license).
+ */
+
 #ifndef _CRYPTOTOOLS_H_
 #define _CRYPTOTOOLS_H_
 
-#include <JsonConfig/JsonConfig.h>
+#include <botan/cipher_mode.h>
 
-// NOTE: we're deliberately keeping the API independent of the actual crypto library being used. There
-// should be no mention of Botan in the API. This requirement does however complicate the implementation
-// a bit, for example default key and IV can't be stored as Botan's secure_vectors.
+#include <JsonConfig/JsonConfig.h>
 
 class CryptoTools : public NoCopy
 {
@@ -24,8 +30,10 @@ class CryptoTools : public NoCopy
     void SelfTest();
 
    private:
-    string m_defaultPassword;
-    vector<uint8_t> m_defaultKeyAndIv;
+    unique_ptr<Botan::Cipher_Mode> m_encryptor;
+    unique_ptr<Botan::Cipher_Mode> m_decryptor;
+
+    Botan::secure_vector<uint8_t> m_iv;
 
     static CryptoTools* m_instance;
 };
