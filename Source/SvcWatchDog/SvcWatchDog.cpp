@@ -381,7 +381,7 @@ void SvcWatchDog::Run()
         // also kill time might be set by the previous watchdog-initiated shutdown
         m_killTime = 0;
 
-        LOGSTR() << "starting " << m_targetExecutable;
+        LOGSTR(Information) << "starting " << m_targetExecutable;
 
         auto processHandle = _spawnv(_P_NOWAIT, &m_targetExecutable[0], m_argv);
 

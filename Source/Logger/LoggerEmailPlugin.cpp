@@ -34,12 +34,14 @@ LoggerEmailPlugin::LoggerEmailPlugin(JsonConfig& cfg, const string& section) : m
     m_maxLogs = cfg.GetNumber(section, "maxLogs", 1000);
     m_timeoutOnShutdown = cfg.GetNumber(section, "timeoutOnShutdown", 3000);
 
-    if (m_emailSection.empty() || m_recipients.empty())
+    if (m_emailSection.empty() || m_recipients.empty() || m_minLogLevel >= MaskAllLogs)
     {
         // make sure m_emailSection is empty, that's our signal that email logging is not configured
         m_emailSection = "";
         // email logging not fully configured, disable it
         m_minLogLevel = MaskAllLogs;
+
+        LOGSTR() << "section=" << section << ": disabled or not fully configured";
     }
     else
     {
@@ -50,11 +52,11 @@ LoggerEmailPlugin::LoggerEmailPlugin(JsonConfig& cfg, const string& section) : m
         }
 
         m_emailSender.Configure(cfg, m_emailSection);
-    }
 
-    LOGSTR() << "section=" << section << ", minLogLevel=" << m_minLogLevel << ", emailSection=" << m_emailSection
-             << ", recipients=" << JoinStrings(m_recipients, ", ") << ", subject=" << m_subject << ", maxDelay=" << m_maxDelay
-             << ", maxLogs=" << m_maxLogs << ", timeoutOnShutdown=" << m_timeoutOnShutdown;
+        LOGSTR() << "section=" << section << ": minLogLevel=" << m_minLogLevel << ", emailSection=" << m_emailSection
+                 << ", recipients=" << JoinStrings(m_recipients, ", ") << ", subject=" << m_subject << ", maxDelay=" << m_maxDelay
+                 << ", maxLogs=" << m_maxLogs << ", timeoutOnShutdown=" << m_timeoutOnShutdown;
+    }
 }
 
 LoggerEmailPlugin::~LoggerEmailPlugin() {}
