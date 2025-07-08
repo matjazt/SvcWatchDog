@@ -30,7 +30,7 @@ SvcWatchDog* SvcWatchDog::m_instance = nullptr;
 // using three of them - major.minor.patch)
 #define SVCWATCHDOG_VERSION "1.0.0"
 
-SvcWatchDog::SvcWatchDog() : m_section("svcWatchDog")
+SvcWatchDog::SvcWatchDog() noexcept : m_section("svcWatchDog")
 {
     // copy the address of the current object so we can access it from
     // the static member callback functions.
@@ -82,7 +82,7 @@ void SvcWatchDog::Configure()
     m_serviceStatus.dwCheckPoint = 0;
     m_serviceStatus.dwWaitHint = 0;
 
-    bool usePath = Cfg.GetBool(m_section, "usePath", false);
+    const bool usePath = Cfg.GetBool(m_section, "usePath", false);
     LOGSTR() << "usePath=" << BOOL2STR(usePath);
 
     // read all child process arguments, starting with the actual executable path (or at least file name)
@@ -103,7 +103,7 @@ void SvcWatchDog::Configure()
         {
             if (usePath)
             {
-                char* achPath = getenv("PATH");
+                const char* achPath = getenv("PATH");
                 LOGSTR() << "searching path " << achPath;
                 auto pathDirectories = Split(achPath, ';');
                 bool targetFound = false;
@@ -309,7 +309,7 @@ bool SvcWatchDog::ReceiveUdpPing()
     {
         if (received == SOCKET_ERROR)
         {
-            int error = WSAGetLastError();
+            const int error = WSAGetLastError();
             if (error != WSAEWOULDBLOCK)
             {
                 LOGSTR(Error) << "recvfrom failed with error code: " << error;
@@ -334,7 +334,7 @@ void SvcWatchDog::Run()
 
     CdToWorkingDir();
 
-    int watchdogTimeout = Cfg.GetNumber(m_section, "watchdogTimeout", -1);
+    const int watchdogTimeout = Cfg.GetNumber(m_section, "watchdogTimeout", -1);
     LOGSTR(Information) << "watchdogTimeout=" << watchdogTimeout;
 
     // if UDP watchdog is configured, start listening on a random port
@@ -354,7 +354,7 @@ void SvcWatchDog::Run()
 
     auto tmp = filesystem::absolute(m_workingDirectory).string() + to_string(SteadyTime());
     string shutdownEventName = "Global\\SvcWatchDog.";
-    for (char ch : tmp)
+    for (const char ch : tmp)
     {
         if (isalnum(ch))
         {
@@ -446,7 +446,7 @@ void SvcWatchDog::Run()
 
         if (m_isRunning)
         {
-            int restartDelay = Cfg.GetNumber(m_section, "restartDelay", 5000);
+            const int restartDelay = Cfg.GetNumber(m_section, "restartDelay", 5000);
             LOGSTR() << "waiting " << restartDelay << " ms before restarting";
             WaitForSingleObject(m_loopTriggerEvent, restartDelay);
         }
@@ -454,7 +454,7 @@ void SvcWatchDog::Run()
 }
 
 // Test if the service is currently installed
-bool SvcWatchDog::IsInstalled()
+bool SvcWatchDog::IsInstalled() noexcept
 {
     bool result = false;
 
@@ -489,7 +489,7 @@ bool SvcWatchDog::Install()
     string loadOrderGroup = Cfg.GetString(m_section, "loadOrderGroup", "");
     LOGSTR(Information) << "loadOrderGroup=" << loadOrderGroup;
 
-    bool autoStart = Cfg.GetBool(m_section, "autoStart", false);
+    const bool autoStart = Cfg.GetBool(m_section, "autoStart", false);
     LOGSTR(Information) << "autoStart=" << BOOL2STR(autoStart);
 
     // Create the service
@@ -546,10 +546,10 @@ bool SvcWatchDog::Start()
 {
     char serviceName[100];
     SAFE_STRING_COPY(serviceName, m_serviceName.c_str());
-    SERVICE_TABLE_ENTRY st[] = {{serviceName, ServiceMain}, {nullptr, nullptr}};
+    const SERVICE_TABLE_ENTRY st[] = {{serviceName, ServiceMain}, {nullptr, nullptr}};
 
     LOGSTR(Verbose) << "calling StartServiceCtrlDispatcher()";
-    bool b = ::StartServiceCtrlDispatcher(st) != 0;
+    const bool b = ::StartServiceCtrlDispatcher(st) != 0;
     LOGSTR(Verbose) << "StartServiceCtrlDispatcher() result: " << BOOL2STR(b);
     return b;
 }
@@ -599,7 +599,7 @@ bool SvcWatchDog::Initialize()
     SetStatus(SERVICE_START_PENDING);
 
     // Perform the actual initialization
-    bool result = OnInit();
+    const bool result = OnInit();
 
     // Set final state
     m_serviceStatus.dwWin32ExitCode = GetLastError();
@@ -664,7 +664,7 @@ void SvcWatchDog::Handler(DWORD dwOpcode)
 
 void SvcWatchDog::InitiateProcessShutdown()
 {
-    uint64_t shutdownTime = Cfg.GetNumber(m_section, "shutdownTime", 10000);
+    const uint64_t shutdownTime = Cfg.GetNumber(m_section, "shutdownTime", 10000);
     LOGSTR(Information) << "signalling the process and setting timeout to now + " << shutdownTime << " ms";
 
     // signal the child process, so it can shut down gracefully

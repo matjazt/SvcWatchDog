@@ -15,12 +15,12 @@
 
 JsonConfig* JsonConfig::m_instance = nullptr;
 
-JsonConfig::JsonConfig() {}
+JsonConfig::JsonConfig() noexcept {}
 
 JsonConfig::~JsonConfig() {}
 
-JsonConfig* JsonConfig::GetInstance() { return m_instance; }
-void JsonConfig::SetInstance(JsonConfig* instance) { m_instance = instance; }
+JsonConfig* JsonConfig::GetInstance() noexcept { return m_instance; }
+void JsonConfig::SetInstance(JsonConfig* instance) noexcept { m_instance = instance; }
 
 void JsonConfig::Load(const filesystem::path& filePath)
 {
@@ -37,44 +37,73 @@ void JsonConfig::Load(const filesystem::path& filePath)
     }
 }
 
-json* JsonConfig::GetJson() { return &m_json; }
+json* JsonConfig::GetJson(const string& path) { return path.empty() ? &m_json : FindKey(path, ""); }
 
-string JsonConfig::GetString(const string& section, const string& key, const string& defaultValue)
+json* JsonConfig::FindKey(const string& path, const string& key)
 {
-    lock_guard<mutex> lock(m_cs);
-    if (m_json.contains(section) && m_json[section].contains(key))
+    auto tokens = Split(path, '.');
+    if (!key.empty())
     {
-        return m_json[section][key].get<string>();
+        tokens.push_back(key);
     }
-    else
+
+    json* current = &m_json;
+    for (const auto& token : tokens)
+    {
+        if (current->contains(token))
+        {
+            current = &(*current)[token];
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    return current;
+}
+
+template <typename T>
+T JsonConfig::GetParameter(const string& path, const string& key, T defaultValue)
+{
+    try
+    {
+        const auto* parameter = FindKey(path, key);
+        return parameter ? parameter->get<T>() : defaultValue;
+    }
+    catch (...)
     {
         return defaultValue;
     }
 }
 
-int JsonConfig::GetString(const string& section, const string& key, char* buffer, size_t bufferSize, const string& defaultValue)
+string JsonConfig::GetString(const string& path, const string& key, const string& defaultValue)
 {
-    string v = GetString(section, key, defaultValue);
+    return GetParameter(path, key, defaultValue);
+}
+
+int JsonConfig::GetString(const string& path, const string& key, char* buffer, size_t bufferSize, const string& defaultValue)
+{
+    string v = GetParameter(path, key, defaultValue);
     strncpy(buffer, &v[0], bufferSize - 1);
     buffer[bufferSize - 1] = 0;
     return (int)strlen(buffer);
 }
 
 template <typename T>
-T JsonConfig::GetNumber(const string& section, const string& key, T defaultValue)
+T JsonConfig::GetNumber(const string& path, const string& key, T defaultValue)
 {
-    lock_guard<mutex> lock(m_cs);
+    const auto* parameter = FindKey(path, key);
+    if (!parameter)
+    {
+        // key not present, so we should stop trying immediately
+        return defaultValue;
+    }
 
     try
     {
-        if (!m_json.contains(section) || !m_json[section].contains(key))
-        {
-            // key not present, so we should stop trying immediately
-            return defaultValue;
-        }
-
         // try to read it as a number
-        return m_json[section][key].get<T>();
+        return parameter->get<T>();
     }
     catch (...)
     {
@@ -83,24 +112,23 @@ T JsonConfig::GetNumber(const string& section, const string& key, T defaultValue
     // so the key is present, but it is not a number
     try
     {
-        string s = m_json[section][key].get<string>();
-        T value;
-        char unparsed;
+        string s = parameter->get<string>();
         if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0)
         {
             // we probably have a hex number
             uint64_t hex;
+            char unparsed;
             if (sscanf(s.c_str(), "%llx%c", &hex, &unparsed) == 1)
             {
-                value = static_cast<T>(hex);
                 // we're deliberately ignoring the overflow check here (if (static_cast<uint64_t>(value) == hex))
-                return value;
+                return static_cast<T>(hex);
             }
         }
         else
         {
             // attempt to parse the string into the target numeric type
             std::istringstream iss(s);
+            T value;
             iss >> value;
 
             // check for errors (e.g., invalid characters or partial parsing)
@@ -117,31 +145,56 @@ T JsonConfig::GetNumber(const string& section, const string& key, T defaultValue
     return defaultValue;
 }
 
-bool JsonConfig::GetBool(const string& section, const string& key, bool defaultValue)
+bool JsonConfig::GetBool(const string& path, const string& key, bool defaultValue) { return GetParameter(path, key, defaultValue); }
+
+vector<string> JsonConfig::GetStringVector(const string& path, const string& key, vector<string> defaultValue)
 {
-    lock_guard<mutex> lock(m_cs);
-    if (m_json.contains(section) && m_json[section].contains(key))
+    return GetParameter(path, key, defaultValue);
+}
+
+vector<string> JsonConfig::GetKeys(const string& path, bool includeObjects = true, bool includeArrays = true, bool includeOthers = true)
+{
+    vector<string> keys;
+    auto* section = FindKey(path, "");
+    if (section)
     {
-        return m_json[section][key].get<bool>();
+        for (auto& item : section->items())
+        {
+            bool includeItem;
+            if (item.value().is_object())
+            {
+                includeItem = includeObjects;
+            }
+            else if (item.value().is_array())
+            {
+                includeItem = includeArrays;
+            }
+            else
+            {
+                includeItem = includeOthers;
+            }
+
+            if (includeItem)
+            {
+                keys.push_back(item.key());
+            }
+        }
     }
-    else
-    {
-        return defaultValue;
-    }
+    return keys;
 }
 
 // Explicit instantiation for specific types
-template int8_t JsonConfig::GetNumber(const string& section, const string& key, int8_t defaultValue);
-template uint8_t JsonConfig::GetNumber(const string& section, const string& key, uint8_t defaultValue);
+template int8_t JsonConfig::GetNumber(const string& path, const string& key, int8_t defaultValue);
+template uint8_t JsonConfig::GetNumber(const string& path, const string& key, uint8_t defaultValue);
 
-template int16_t JsonConfig::GetNumber(const string& section, const string& key, int16_t defaultValue);
-template uint16_t JsonConfig::GetNumber(const string& section, const string& key, uint16_t defaultValue);
+template int16_t JsonConfig::GetNumber(const string& path, const string& key, int16_t defaultValue);
+template uint16_t JsonConfig::GetNumber(const string& path, const string& key, uint16_t defaultValue);
 
-template int32_t JsonConfig::GetNumber(const string& section, const string& key, int32_t defaultValue);
-template uint32_t JsonConfig::GetNumber(const string& section, const string& key, uint32_t defaultValue);
+template int32_t JsonConfig::GetNumber(const string& path, const string& key, int32_t defaultValue);
+template uint32_t JsonConfig::GetNumber(const string& path, const string& key, uint32_t defaultValue);
 
-template int64_t JsonConfig::GetNumber(const string& section, const string& key, int64_t defaultValue);
-template uint64_t JsonConfig::GetNumber(const string& section, const string& key, uint64_t defaultValue);
+template int64_t JsonConfig::GetNumber(const string& path, const string& key, int64_t defaultValue);
+template uint64_t JsonConfig::GetNumber(const string& path, const string& key, uint64_t defaultValue);
 
-template double JsonConfig::GetNumber(const string& section, const string& key, double defaultValue);
-template float JsonConfig::GetNumber(const string& section, const string& key, float defaultValue);
+template double JsonConfig::GetNumber(const string& path, const string& key, double defaultValue);
+template float JsonConfig::GetNumber(const string& path, const string& key, float defaultValue);

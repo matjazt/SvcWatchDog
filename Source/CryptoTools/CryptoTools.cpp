@@ -8,12 +8,9 @@
 
 #include <botan/auto_rng.h>
 #include <botan/cipher_mode.h>
-// #include <botan/hex.h>
 #include <botan/base64.h>
-// #include <botan/pbkdf2.h>
-// #include <botan/sh _64.h>
 #include <botan/pwdhash.h>
-// #include <botan/symkey.h>
+
 #include <memory>
 #include <iostream>
 
@@ -24,13 +21,13 @@ using namespace Botan;
 
 CryptoTools* CryptoTools::m_instance = nullptr;
 
-CryptoTools::CryptoTools() {}
+CryptoTools::CryptoTools() noexcept {}
 
 CryptoTools::~CryptoTools() {}
 
-CryptoTools* CryptoTools::GetInstance() { return m_instance; }
+CryptoTools* CryptoTools::GetInstance() noexcept { return m_instance; }
 
-void CryptoTools::SetInstance(CryptoTools* instance) { m_instance = instance; }
+void CryptoTools::SetInstance(CryptoTools* instance) noexcept { m_instance = instance; }
 
 void CryptoTools::Configure(JsonConfig& cfg, const string& section, const string& defaultPassword)
 {
@@ -87,11 +84,22 @@ void CryptoTools::Configure(JsonConfig& cfg, const string& section, const string
     m_decryptor->set_key(key);
 }
 
+#define CHECK_INITIALIZATION_STATUS()                                     \
+    do                                                                    \
+    {                                                                     \
+        if (!m_encryptor || !m_decryptor)                                 \
+        {                                                                 \
+            throw runtime_error("CryptoTools object not configured yet"); \
+        }                                                                 \
+    } while (0);
+
 // Returns the AES-256-CBC encrypted string of the given plain text using the specified password or the default password.
 // OpenSSL equivalent: openssl enc -base64 -e -aes-256-cbc -pbkdf2 -nosalt -pass pass:SuperSecretPassword
 // (you can ommit -pass and enter it interactively).
 string CryptoTools::Aes256CbcEncrypt(const string& plainText)
 {
+    CHECK_INITIALIZATION_STATUS();
+
     m_encryptor->start(m_iv);
 
     // convert plain text to a buffer, then encrypt it in place
@@ -107,6 +115,8 @@ string CryptoTools::Aes256CbcEncrypt(const string& plainText)
 // (you can ommit -pass and enter it interactively).
 string CryptoTools::Aes256CbcDecrypt(const string& base64CipherText)
 {
+    CHECK_INITIALIZATION_STATUS();
+
     m_decryptor->start(m_iv);
 
     auto buffer = base64_decode(base64CipherText);
@@ -118,6 +128,33 @@ string CryptoTools::Aes256CbcDecrypt(const string& base64CipherText)
     return string(buffer.begin(), buffer.end());
 }
 
+string CryptoTools::GetPossiblyEncryptedConfigurationString(JsonConfig& cfg, const string& section, const string& key,
+                                                            const string& defaultValue)
+{
+    CHECK_INITIALIZATION_STATUS();
+
+    string raw = cfg.GetString(section, key);
+    if (raw.empty())
+    {
+        return defaultValue;
+    }
+
+    // let's try to decrypt the string; if decryption fails, we assume it is not encrypted, and suggest encryption
+    try
+    {
+        return Aes256CbcDecrypt(raw);
+    }
+    catch (...)
+    {
+        LOGSTR(Warning) << "it seems " << section << " -> " << key << " is not encrypted, using is as it is";
+        LOGSTR(Information) << "you should use the following encrypted value for " << section << " -> " << key << " : "
+                            << Aes256CbcEncrypt(raw);
+        return raw;
+    }
+}
+
+/*
+
 void CryptoTools::SelfTest()
 {
     string plain = "Hahaha";
@@ -128,7 +165,6 @@ void CryptoTools::SelfTest()
     cout << "decrypted " << encrypted << " to " << decrypted << "\n";
 }
 
-/*
 Botan::secure_vector<uint8_t> DeriveKeyAndIv_Pbkdf2_Sha256(const string& password)
 {
     using namespace Botan;

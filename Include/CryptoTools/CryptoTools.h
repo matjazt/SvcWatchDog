@@ -16,18 +16,21 @@
 class CryptoTools : public NoCopy
 {
    public:
-    CryptoTools();
+    CryptoTools() noexcept;
     ~CryptoTools();
 
-    static CryptoTools* GetInstance();
-    static void SetInstance(CryptoTools* instance);
+    static CryptoTools* GetInstance() noexcept;
+    static void SetInstance(CryptoTools* instance) noexcept;
 
     void Configure(JsonConfig& cfg, const string& section, const string& defaultPassword);
 
     string Aes256CbcEncrypt(const string& plainText);
     string Aes256CbcDecrypt(const string& base64CipherText);
 
-    void SelfTest();
+    string GetPossiblyEncryptedConfigurationString(JsonConfig& cfg, const string& section, const string& key,
+                                                   const string& defaultValue = "");
+
+    // void SelfTest();
 
    private:
     unique_ptr<Botan::Cipher_Mode> m_encryptor;
@@ -37,5 +40,7 @@ class CryptoTools : public NoCopy
 
     static CryptoTools* m_instance;
 };
+
+#define Crypto (*CryptoTools::GetInstance())
 
 #endif

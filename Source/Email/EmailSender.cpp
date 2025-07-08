@@ -9,18 +9,19 @@
 #include <curl/curl.h>
 #include <Email/EmailSender.h>
 #include <Logger/Logger.h>
+#include <CryptoTools/CryptoTools.h>
 
 #include <iostream>
 
 EmailSender* EmailSender::m_instance = nullptr;
 
-EmailSender::EmailSender() : m_sslFlag(CURLUSESSL_ALL), m_timeout(120000) {}
+EmailSender::EmailSender() noexcept : m_sslFlag(CURLUSESSL_ALL), m_timeout(120000) {}
 
 EmailSender::~EmailSender() {}
 
-EmailSender* EmailSender::GetInstance() { return m_instance; }
+EmailSender* EmailSender::GetInstance() noexcept { return m_instance; }
 
-void EmailSender::SetInstance(EmailSender* instance) { m_instance = instance; }
+void EmailSender::SetInstance(EmailSender* instance) noexcept { m_instance = instance; }
 
 void EmailSender::Configure(JsonConfig& cfg, const string& section)
 {
@@ -44,8 +45,7 @@ void EmailSender::Configure(JsonConfig& cfg, const string& section)
     m_username = cfg.GetString(section, "username", "");
     LOGSTR() << "username=" << m_username;
 
-    // TODO: support at least some kind of secure password storage
-    m_password = cfg.GetString(section, "password", "");
+    m_password = Crypto.GetPossiblyEncryptedConfigurationString(Cfg, section, "password", "");
     LOGSTR() << "password=" << (m_password.empty() ? "<none>" : "<non-empty>");
 
     m_timeout = cfg.GetNumber(section, "timeout", m_timeout);
@@ -155,7 +155,7 @@ int EmailSender::SendSimpleEmail(const string& subject, const string& utf8body, 
     curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
 
     // Send the message
-    auto res = curl_easy_perform(curl);
+    const auto res = curl_easy_perform(curl);
 
     // Check for errors
     if (res == CURLE_OK)

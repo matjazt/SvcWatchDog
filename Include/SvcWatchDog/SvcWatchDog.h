@@ -30,12 +30,12 @@
 class SvcWatchDog : public NoCopy
 {
    public:
-    explicit SvcWatchDog();
+    SvcWatchDog() noexcept;
     ~SvcWatchDog();
 
     void Configure();
 
-    bool IsInstalled();
+    bool IsInstalled() noexcept;
     bool Install();
     bool Uninstall();
     bool Start();

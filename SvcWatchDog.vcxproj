@@ -75,11 +75,13 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
     <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
@@ -247,6 +249,7 @@
     <ClCompile Include="Source\CryptoTools\CryptoTools.cpp" />
     <ClCompile Include="Source\EMail\EmailSender.cpp" />
     <ClCompile Include="Source\JsonConfig\JsonConfig.cpp" />
+    <ClCompile Include="Source\Logger\LoggerEmailPlugin.cpp" />
     <ClCompile Include="Source\SimpleTools\SimpleTools.cpp" />
     <ClCompile Include="Source\SvcWatchDog\SvcWatchDog.cpp" />
     <ClCompile Include="Source\SvcWatchDog\Main.cpp" />
@@ -257,6 +260,7 @@
     <ClInclude Include="Include\CryptoTools\CryptoTools.h" />
     <ClInclude Include="Include\EMail\EmailSender.h" />
     <ClInclude Include="Include\JsonConfig\JsonConfig.h" />
+    <ClInclude Include="Include\Logger\LoggerEmailPlugin.h" />
     <ClInclude Include="Include\SimpleTools\SimpleTools.h" />
     <ClInclude Include="Include\SvcWatchDog\resource.h" />
     <ClInclude Include="Include\SvcWatchDog\SvcWatchDog.h" />

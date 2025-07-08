@@ -40,6 +40,9 @@
     <ClCompile Include="Source\Test\SyncEventTest.cpp">
       <Filter>Test</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Logger\LoggerEmailPlugin.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Logger\Logger.h">
@@ -62,6 +65,9 @@
       <Filter>Tools</Filter>
     </ClInclude>
     <ClInclude Include="Include\CryptoTools\CryptoTools.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Logger\LoggerEmailPlugin.h">
       <Filter>Tools</Filter>
     </ClInclude>
   </ItemGroup>

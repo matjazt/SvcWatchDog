@@ -12,6 +12,7 @@
 #include <CryptoTools/CryptoTools.h>
 #include <conio.h>
 #include <iostream>
+#include <Logger/LoggerEmailPlugin.h>
 
 #pragma comment(lib, "ws2_32.lib")  // Link with Winsock library
 
@@ -57,7 +58,7 @@ int main(int argc, char* argv[])
 
         Logger logger;
         Logger::SetInstance(&logger);
-        Lg.Configure(Cfg, "log");
+        Lg.Configure(Cfg);
         Lg.Start();
 
         CryptoTools cryptoTools;
@@ -66,6 +67,9 @@ int main(int argc, char* argv[])
         // initialize CryptoTools with a default password, in case password file is not configured in the
         // configuration file (cryptoTools->passwordFile)
         cryptoTools.Configure(Cfg, "cryptoTools", "A7k2TDrZkf3kMCGMmBhA");
+
+        // configure all email plugins
+        LoggerEmailPlugin::ConfigureAll(Cfg, Lg);
 
         // now we can configure the service, because the logger is ready
         cService.Configure();
@@ -86,6 +90,7 @@ int main(int argc, char* argv[])
 
         // cryptoTools.SelfTest();
         // cryptoTools.SelfTest();
+        // _getch();
     }
 
     WSACleanup();

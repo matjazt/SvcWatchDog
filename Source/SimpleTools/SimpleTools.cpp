@@ -34,7 +34,7 @@ string LoadTextFile(const filesystem::path& filePath)
 
     // Move the file pointer to the end to get the file size
     file.seekg(0, std::ios::end);
-    auto fileSize = (size_t)file.tellg();
+    const auto fileSize = (size_t)file.tellg();
     file.seekg(0, std::ios::beg);
 
     // Reserve space and read the entire file into a string
@@ -45,21 +45,21 @@ string LoadTextFile(const filesystem::path& filePath)
     return content;
 }
 
-void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds)
+void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds) noexcept
 {
     // Get the current time as a time_point
-    auto now = std::chrono::system_clock::now();
+    const auto now = std::chrono::system_clock::now();
     // Convert to time_t for formatting (seconds precision)
-    auto now_time = std::chrono::system_clock::to_time_t(now);
+    const auto now_time = std::chrono::system_clock::to_time_t(now);
     localTime = std::localtime(&now_time);
     // Extract milliseconds from the current time_point
     milliseconds = (int)(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000).count();
 }
 
-uint64_t SteadyTime()
+uint64_t SteadyTime() noexcept
 {
-    auto now = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    const auto now = std::chrono::steady_clock::now();
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
     return duration.count();
 }
 
@@ -81,13 +81,13 @@ string GetExecutableName()
 
 string GetHostname()
 {
-    char hostname[256];
+    char hostname[256] = "";
 #ifdef _WIN32
     DWORD size = sizeof(hostname);
-    bool ok = GetComputerNameA(hostname, &size);
+    const bool ok = GetComputerNameA(hostname, &size);
 #else
     // TODO: not tested on linux
-    bool ok = gethostname(hostname, sizeof(hostname)) == 0;
+    const bool ok = gethostname(hostname, sizeof(hostname)) == 0;
 #endif
     return ok ? hostname : "unknown";
 }
@@ -136,9 +136,9 @@ string JoinStrings(const vector<string>& words, const string& delimiter)
 
 string TrimEx(const string& str, const string& leftTrimChars, const string& rightTrimChars)
 {
-    size_t start = str.find_first_not_of(leftTrimChars);
+    const size_t start = str.find_first_not_of(leftTrimChars);
     if (start == string::npos) return "";  // All characters are trimmed
-    size_t end = str.find_last_not_of(rightTrimChars);
+    const size_t end = str.find_last_not_of(rightTrimChars);
     if (end == string::npos) return str.substr(start);  // No right trim
     return str.substr(start, end - start + 1);
 }
@@ -162,7 +162,7 @@ SyncEvent::SyncEvent(bool initialState, bool autoReset)
 bool SyncEvent::SetEvent()
 {
     lock_guard<mutex> lock(m_mtx);
-    bool wasSignaled = m_signaled;
+    const bool wasSignaled = m_signaled;
     m_signaled = true;
     if (m_autoReset)
     {
@@ -180,7 +180,7 @@ bool SyncEvent::SetEvent()
 bool SyncEvent::ResetEvent()
 {
     lock_guard<mutex> lock(m_mtx);
-    bool wasSignaled = m_signaled;
+    const bool wasSignaled = m_signaled;
     m_signaled = false;
     return wasSignaled;
 }
@@ -198,7 +198,7 @@ void SyncEvent::WaitForSingleEvent()
 bool SyncEvent::WaitForSingleEvent(int milliseconds)
 {
     unique_lock<mutex> lock(m_mtx);
-    bool success = m_cv.wait_for(lock, chrono::milliseconds(milliseconds), [this]() { return m_signaled; });
+    const bool success = m_cv.wait_for(lock, chrono::milliseconds(milliseconds), [this]() { return m_signaled; });
     if (success && m_autoReset)
     {
         m_signaled = false;  // Reset the event if auto-reset is enabled

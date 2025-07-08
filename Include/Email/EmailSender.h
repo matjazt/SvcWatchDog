@@ -6,11 +6,11 @@
 class EmailSender : public NoCopy
 {
    public:
-    EmailSender();
+    EmailSender() noexcept;
     ~EmailSender();
 
-    static EmailSender* GetInstance();
-    static void SetInstance(EmailSender* instance);
+    static EmailSender* GetInstance() noexcept;
+    static void SetInstance(EmailSender* instance) noexcept;
 
     void Configure(JsonConfig& cfg, const string& section);
 

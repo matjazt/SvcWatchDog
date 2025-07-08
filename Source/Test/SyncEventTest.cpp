@@ -25,7 +25,7 @@ void SyncEventTest(bool autoReset)
     int threadLoopCounter = 0;
 
     auto endTime = SteadyTime() + 1000;
-    int numThreads = 10;
+    const int numThreads = 10;
 
     // now start a couple of threads
     for (int i = 0; i < numThreads; ++i)
@@ -36,7 +36,7 @@ void SyncEventTest(bool autoReset)
                 while (SteadyTime() < endTime)
                 {
                     // wait for the event to be set
-                    bool signaled = event.WaitForSingleEvent(1100);
+                    const bool signaled = event.WaitForSingleEvent(1100);
                     lock_guard lock(mtx);
                     if (signaled)
                     {

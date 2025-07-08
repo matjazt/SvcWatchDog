@@ -16,16 +16,12 @@
 
 Logger* Logger::m_instance = nullptr;
 
-Logger::Logger()
+Logger::Logger() noexcept
     : m_minConsoleLevel(LogLevel::Verbose),
       m_minFileLevel(LogLevel::Verbose),
       m_maxFileSize(0),
       m_maxWriteDelay(0),
       m_maxOldFiles(0),
-      m_minEmailLevel(LogLevel::MaskAllLogs),
-      m_maxEmailDelay(0),
-      m_maxEmailLogs(0),
-      m_emailTimeoutOnShutdown(0),
       m_logThreadId(false),
       m_mute(false),
       m_emailTimestamp(0),
@@ -38,9 +34,9 @@ Logger::Logger()
 
 Logger::~Logger() { Shutdown(); }
 
-Logger* Logger::GetInstance() { return m_instance; }
+Logger* Logger::GetInstance() noexcept { return m_instance; }
 
-void Logger::SetInstance(Logger* instance) { m_instance = instance; }
+void Logger::SetInstance(Logger* instance) noexcept { m_instance = instance; }
 
 void Logger::Configure(JsonConfig& cfg, const string& section)
 {
@@ -62,33 +58,15 @@ void Logger::Configure(JsonConfig& cfg, const string& section)
     m_maxWriteDelay = cfg.GetNumber(section, "maxWriteDelay", 500);
     m_maxOldFiles = cfg.GetNumber(section, "maxOldFiles", 0);
 
-    m_minEmailLevel = (LogLevel)cfg.GetNumber(section, "minEmailLevel", (int)LogLevel::Verbose);
-    m_emailSection = cfg.GetString(section, "emailSection", "");
-    m_emailRecipients = (*cfg.GetJson())[section]["emailRecipients"].get<vector<string>>();
-    m_emailSubject = cfg.GetString(section, "emailSubject", "");
-    m_maxEmailDelay = cfg.GetNumber(section, "maxEmailDelay", 300);
-    m_maxEmailLogs = cfg.GetNumber(section, "maxEmailLogs", 1000);
-    m_emailTimeoutOnShutdown = cfg.GetNumber(section, "emailTimeoutOnShutdown", 3000);
-
-    if (m_emailSection.empty() || m_emailRecipients.empty())
-    {
-        // make sure m_emailSection is empty, that's our signal that email logging is not configured
-        m_emailSection = "";
-        // email logging not fully configured, disable it
-        m_minEmailLevel = MaskAllLogs;
-    }
-    else
-    {
-        if (m_emailSubject.empty())
-        {
-            // provide a portable default subject in the form of "logs from software @ host"
-            m_emailSubject = GetExecutableName() + " @ " + GetHostname();
-        }
-
-        m_emailSender.Configure(cfg, m_emailSection);
-    }
-
     m_logThreadId = cfg.GetBool(section, "logThreadId", false);
+}
+
+void Logger::RegisterPlugin(unique_ptr<ILoggerPlugin> plugin) { m_plugins.emplace_back(std::move(plugin)); }
+
+LogLevel Logger::GetMinPluginLevel()
+{
+    auto it = std::ranges::min_element(m_plugins, {}, &ILoggerPlugin::MinLogLevel);
+    return (it != m_plugins.end()) ? (*it)->MinLogLevel() : MaskAllLogs;
 }
 
 void Logger::Start()
@@ -101,11 +79,6 @@ void Logger::Start()
         LOGSTR() << "minConsoleLevel=" << m_minConsoleLevel << ", minFileLevel=" << m_minFileLevel << ", filePath=" << m_filePath.string()
                  << ", maxFileSize=" << m_maxFileSize << ", maxOldFiles=" << m_maxOldFiles << ", maxWriteDelay=" << m_maxWriteDelay
                  << ", logThreadId=" << BOOL2STR(m_logThreadId);
-
-        LOGSTR() << "minEmailLevel=" << m_minEmailLevel << ", emailSection=" << m_emailSection
-                 << ", emailRecipients=" << JoinStrings(m_emailRecipients, ", ") << ", emailSubject=" << m_emailSubject
-                 << ", maxEmailDelay=" << m_maxEmailDelay << ", maxEmailLogs=" << m_maxEmailLogs
-                 << ", emailTimeoutOnShutdown=" << m_emailTimeoutOnShutdown;
     }
 }
 
@@ -122,11 +95,11 @@ void Logger::Shutdown()
     Flush(true);  // flush any remaining logs
 }
 
-void Logger::Mute(bool mute) { m_mute = mute; }
+void Logger::Mute(bool mute) noexcept { m_mute = mute; }
 
 void Logger::Log(LogLevel level, const string& message, const char* file, const char* func)
 {
-    if (m_mute || !m_running || (level < m_minConsoleLevel && level < m_minFileLevel && level < m_minEmailLevel))
+    if (m_mute || !m_running || (level < m_minConsoleLevel && level < m_minFileLevel && level < GetMinPluginLevel()))
     {
         return;
     }
@@ -168,7 +141,7 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     if (m_logThreadId)
     {
         // get the thread id - we deliberately truncate the hash to 32 bits, because it should be good enough for our purposes.
-        uint32_t threadIdHash = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
+        const uint32_t threadIdHash = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
         // convert it to a string
 #pragma warning(suppress : 6031)
         snprintf(threadIdPrefix, sizeof(threadIdPrefix), "%08x: ", threadIdHash);
@@ -182,7 +155,7 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     // this seems to be the fastest way to get a string representation of the thread id
 
     // put all data into a single log string, including trailing newline
-    size_t maxSize = message.length() + locationPrefix.length() + 60;  // 60 - timestamp, log level, threadId etc
+    const size_t maxSize = message.length() + locationPrefix.length() + 60;  // 60 - timestamp, log level, threadId etc
     string fullMessage;
     fullMessage.resize(maxSize);  // 50 - timestamp, log level etc
     size_t actualLength =
@@ -200,21 +173,22 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     // now obtain the lock to avoid messing up the output or crashing the queue when multiple threads are logging
     lock_guard<mutex> lock(m_cs);
 
+    // console output
     if (m_minConsoleLevel <= level)
     {
         cout << fullMessage;
     }
 
-    // we deliberately ignore the logs from EmailSender, because we don't want them to start an email sending loop
-    if (m_minEmailLevel <= level && (NULLOREMPTY(file) || !string(file).ends_with("EmailSender.cpp")))
+    // plugin output
+    for (auto& plugin : m_plugins)
     {
-        if (m_emailQueue->empty())
+        if (level >= plugin->MinLogLevel())
         {
-            m_emailTimestamp = SteadyTime();
+            plugin->Log(level, fullMessage);
         }
-        m_emailQueue->push(fullMessage);
     }
 
+    // file output
     if (m_minFileLevel <= level)
     {
         m_fileQueue->push(std::move(fullMessage));
@@ -232,11 +206,11 @@ void Logger::Msg(LogLevel level, const char* pszFmt, ...)
     va_start(p, pszFmt);
 
     // prepare text, then use fixed string Log method
-    int maxSize = 5000;
+    const size_t maxSize = 5000;
     string message;
     message.resize(maxSize);
 
-    int actualLength = _vsnprintf(&message[0], maxSize - 1, pszFmt, p);
+    const int actualLength = _vsnprintf(&message[0], maxSize - 1, pszFmt, p);
     va_end(p);
     message.resize(actualLength);
 
@@ -283,7 +257,11 @@ void Logger::Flush(bool force)
         // For the time being, we're just catching the exception and hope it was temporary.
     }
 
-    FlushEmailQueue(force);
+    // flush plugins
+    for (auto& plugin : m_plugins)
+    {
+        plugin->Flush(m_running, force);
+    }
 }
 
 void Logger::FlushFileQueue()
@@ -322,7 +300,7 @@ void Logger::FlushFileQueue()
         filesystem::create_directories(m_filePath.parent_path());
     }
 
-    auto fileSize = outFile.tellp();
+    const auto fileSize = outFile.tellp();
     outFile.close();
 
     // rotate file if needed
@@ -375,66 +353,6 @@ void Logger::FlushFileQueue()
     }
 }
 
-void Logger::FlushEmailQueue(bool force)
-{
-    m_cs.lock();
-
-    if (m_emailQueue->empty() ||
-        (!force && (int)m_emailQueue->size() < m_maxEmailLogs && (int)(SteadyTime() - m_emailTimestamp) < m_maxEmailDelay * 1000))
-    {
-        // nothing to flush yet, let's unlock and return
-        m_cs.unlock();
-        return;
-    }
-
-    auto queueCopy = std::move(m_emailQueue);
-    m_emailQueue = std::make_unique<queue<string>>();  // create a new queue for future logs
-    // we're done with m_emailQueue, it is now freshly initialized
-    // let's unlock the logger and then take care of the email sending
-    m_cs.unlock();
-
-    // We need to start a new thread to send the email, because it might take a while and we don't want to block the logger thread (even
-    // when shutting down - we need to shut down reasonably fast, regardless of the email delivery).
-    // NOTE: it is dangerous to detach a thread that depends on the logger, because the logger might be destroyed before the thread
-    // finishes. However, since SendSimpleEmail only needs the class data to prepare the email (which is done at the beginning), the chances
-    // of a crash are low.
-    // TODO: (not really urgent) make the email delivery independent of basically everything, so that it can be safely detached.
-    auto smtpThread = thread(&Logger::SendEmail, this, std::move(queueCopy));
-    if (m_running)
-    {
-        // fire & forget: assume that we'll be running long enough for the SMTP delivery to complete
-        smtpThread.detach();
-    }
-    else
-    {
-        // we're shutting down, so we can't simply forget about the SMTP delivery because it would most likely get canceled if we simply
-        // detach the thread. So, instead of detaching the thread, we try to join it in a reasonable time.
-        // NOTE that we can't afford the usual long(ish) delivery timeout, but a shorter one. The SendMail method takes care of overriding
-        // the default timeout when shutting down.
-        smtpThread.join();
-    }
-
-    if (force)
-    {
-        // forced flush usually means that the software is shutting down. In such cases, a small delay might
-        // prevent crash due to detaching thread too early (see the comment above).
-        SLEEP(100);
-    }
-}
-
-void Logger::SendEmail(unique_ptr<queue<string>> emailQueue)
-{
-    // prepare the email content
-    std::ostringstream oss;
-    while (!emailQueue->empty())
-    {
-        oss << emailQueue->front();
-        emailQueue->pop();
-    }
-
-    m_emailSender.SendSimpleEmail(m_emailSubject, oss.str(), m_emailRecipients, "", m_running ? 0 : m_emailTimeoutOnShutdown);
-}
-
 string Logger::GetLocationPrefix(const char* file, const char* func)
 {
     assert(!NULLOREMPTY(file));
@@ -472,20 +390,20 @@ string Logger::GetLocationPrefix(const char* file, const char* func)
     }
 }
 
-LoggerStream::LoggerStream()
+LoggerStream::LoggerStream() noexcept
 {
     m_level = Debug;
     m_file = nullptr;
     m_func = nullptr;
 }
 
-std::ostringstream& LoggerStream::Get(LogLevel level)
+std::ostringstream& LoggerStream::Get(LogLevel level) noexcept
 {
     m_level = level;
     return m_buffer;
 }
 
-std::ostringstream& LoggerStream::GetEx(const char* file, const char* func, LogLevel level)
+std::ostringstream& LoggerStream::GetEx(const char* file, const char* func, LogLevel level) noexcept
 {
     m_file = file;
     m_func = func;
@@ -493,4 +411,19 @@ std::ostringstream& LoggerStream::GetEx(const char* file, const char* func, LogL
     return m_buffer;
 }
 
-LoggerStream::~LoggerStream() { Logger::GetInstance()->Log(m_level, m_buffer.str(), m_file, m_func); }
+LoggerStream::~LoggerStream()
+{
+    // Now we need to actually log the collected text. While doing it, we prefer to ignore errors, because after all,
+    // it's "just" logging... and we don't have a suitable way of reporting the errors, either.
+    try
+    {
+        const auto logger = Logger::GetInstance();
+        if (logger)
+        {
+            logger->Log(m_level, m_buffer.str(), m_file, m_func);
+        }
+    }
+    catch (...)
+    {
+    }
+}

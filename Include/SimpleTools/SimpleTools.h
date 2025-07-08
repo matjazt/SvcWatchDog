@@ -75,9 +75,9 @@ using namespace std;
 
 string LoadTextFile(const filesystem::path& filePath);
 
-void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds);
+void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds) noexcept;
 
-uint64_t SteadyTime();
+uint64_t SteadyTime() noexcept;
 #define SLEEP(MILLISECONDS) std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS))
 
 string GetExecutableName();
@@ -86,7 +86,7 @@ string GetHostname();
 class NoCopy
 {
    public:
-    NoCopy() {}
+    NoCopy() noexcept {}
 
     NoCopy(const NoCopy&) = delete;
     NoCopy& operator=(const NoCopy&) = delete;
