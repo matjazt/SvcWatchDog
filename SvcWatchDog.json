@@ -6,33 +6,49 @@
     "maxFileSize": 10000000,
     "maxOldFiles": 3,
     "maxWriteDelay": 500,
-    "minEmailLevel": 0,
-    "maxEmailDelay": 10,
-    "maxEmailLogs": 2000,
-    "OPTIONAL.emailSubject": "dammit Janet",
-    "DISABLED.emailSection": "email-gmail",
-    "emailRecipients": [ "janet@example.com", "brad@example.com" ],
-    "emailTimeoutOnShutdown": 2000,
-    "logThreadId": false
+    "logThreadId": false,
+    "DISABLED email": {
+      "someRecipients": {
+        "minLogLevel": 2,
+        "recipients": [ "janet@example.com", "brad@example.com" ],
+        "OPTIONAL subject": "dammit Janet",
+        "emailSection": "email-gmx",
+        "maxDelay": 10,
+        "maxLogs": 2000,
+        "emailTimeoutOnShutdown": 2000
+      },
+      "someMoreRecipients": {
+        "minLogLevel": 2,
+        "recipients": [ "riff.raff@example.com" ],
+        "subject": "time warp news",
+        "emailSection": "email-gmail",
+        "maxDelay": 10,
+        "maxLogs": 2000,
+        "emailTimeoutOnShutdown": 2000
+      }
+    }
   },
   "svcWatchDog": {
     "workDir": "..",
-    "args": [ "powershell.exe", "-ExecutionPolicy", "Unrestricted", "-File", "TestService\\TestService.ps1" ],
+    "args": [
+      "powershell.exe",
+      "-ExecutionPolicy",
+      "Unrestricted",
+      "-File",
+      "TestService\\TestService.ps1"
+    ],
     "usePath": true,
     "autoStart": true,
     "restartDelay": 2000,
     "shutdownTime": 3000,
     "watchdogTimeout": 7000
   },
-  "cryptoTools": {
-    "passwordFile":  "\\temp\\SvcWatchDogPassword.txt"
-  },
   "email-gmail": {
     "smtpServerUrl": "smtps://smtp.gmail.com:465",
     "sslFlag": 3,
     "defaultSourceAddress": "riff.raff at gmail.com",
     "username": "riff.raff at gmail.com",
-    "password": "your application passkey",
+    "password": "riff raff's application passkey",
     "timeout": 10000
   },
   "email-gmx": {
@@ -40,7 +56,10 @@
     "sslFlag": 3,
     "defaultSourceAddress": "riff raff at gmx.com",
     "username": "riff raff at gmx.com",
-    "password": "your actual account password",
+    "password": "riff raff's actual account password",
     "timeout": 10000
+  },
+  "OPTIONAL cryptoTools": {
+    "passwordFile": "C:\\Windows\\CryptoToolsPassword.txt"
   }
 }
