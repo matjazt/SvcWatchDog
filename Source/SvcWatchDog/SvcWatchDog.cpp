@@ -86,7 +86,7 @@ void SvcWatchDog::Configure()
     LOGSTR() << "usePath=" << BOOL2STR(usePath);
 
     // read all child process arguments, starting with the actual executable path (or at least file name)
-    auto argv = (*Cfg.GetJson())[m_section]["args"].get<std::vector<std::string>>();
+    auto argv = Cfg.GetStringVector(m_section, "args");
 
     int i = 0;
     for (const auto& arg : argv)
