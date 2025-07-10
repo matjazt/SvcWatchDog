@@ -1,7 +1,7 @@
 @echo This script should be executed from the Visual Studio Developer Command Prompt.
 @echo Otherwise, the SvcWatchDog binary won't be recompiled - though this may not be an issue if you're aware of the implications.
 
-@SET OUTPUTFOLDER=..\SvcWatchDogDist
+@SET OUTPUTFOLDER=..\dist
 @echo Folder %OUTPUTFOLDER% will be deleted and recreated. If you don't want this, press ctrl-c.
 
 pause

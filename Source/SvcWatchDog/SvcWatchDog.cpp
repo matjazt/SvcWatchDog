@@ -28,7 +28,7 @@ SvcWatchDog* SvcWatchDog::m_instance = nullptr;
 
 // NOTE: when you increment version, you have to do it here as well as in the resource file (but keep the fourth number at 0, as we're only
 // using three of them - major.minor.patch)
-#define SVCWATCHDOG_VERSION "1.0.0"
+#define SVCWATCHDOG_VERSION "1.1.0"
 
 SvcWatchDog::SvcWatchDog() noexcept : m_section("svcWatchDog")
 {

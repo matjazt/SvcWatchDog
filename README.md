@@ -136,7 +136,7 @@ remove the prefix and accompanying space.
 - **maxWriteDelay**: Maximum delay in milliseconds for writing log messages to the file. Default is 500 ms.  
 - **logThreadId**: Set to true if you want to log the thread ID of the thread that generated the log message. Default is false.  
 
-### log->email sections:
+### log.email sections:
 
 To enable email delivery of **SvcWatchDog** logs, you must configure at least one **LoggerEmailPlugin** instance. You can define multiple instances as needed, with each one
 configured independently from the rest.
@@ -163,7 +163,7 @@ Some level of buffering is always applied to avoid generating a separate email f
 excessive email volume. Unless near-instant alerts are needed, a value around 300 seconds (5 minutes) is recommended and
 used by default.
 - **maxLogs**: - Defines the maximum number of log entries to buffer before triggering an email dispatch. An email is sent as
-soon as either this limit is reached or the maxDelay threshold is exceeded—whichever comes first. Default value is 1000.
+soon as either this limit is reached or the **maxDelay** threshold is exceeded—whichever comes first. Default value is 1000.
 - **emailTimeoutOnShutdown**: Specifies the SMTP timeout (in seconds) to be used during application shutdown. Since the shutdown
 process is time-sensitive, this value should be shorter than the standard timeout to avoid delays.
 
@@ -193,12 +193,12 @@ Section parameters:
  - **sslFlag**: See [**Curl** documentation](https://curl.se/libcurl/c/CURLOPT_USE_SSL.html). Note that the values span from 0 to 3, 0 being **CURLUSESSL_NONE** and 3 being **CURLUSESSL_ALL**.
  - **defaultSourceAddress**: The default "From" email address used when sending messages.
  - **username**: Optional SMTP username.
- - **password**: Optional SMTP password. For security reasons, it’s recommended to provide this value in encrypted form—refer to the encryption notes below for details.
+ - **password**: Optional SMTP password. For security reasons, it’s recommended to provide this value in encrypted form — refer to the encryption notes below for details.
  - **timeout**: SMTP delivery timeout in milliseconds.
 
 ### **cryptoTools** section parameters:
 
-- **passwordFile**: Specifies the filename that contains the master password used to decrypt SMTP credentials. If this parameter is omitted, a default hardcoded password will be applied. For more information, refer to the encryption notes below.
+- **passwordFile**: Specifies the file that contains the master password used to decrypt SMTP credentials. If this parameter is omitted, a default hardcoded password will be applied. For more information, refer to the encryption notes below.
 
 ## Application considerations
 
@@ -223,9 +223,9 @@ the encrypted version, recommending that you replace the original with the secur
 
 If you follow this recommendation, be sure to remove the plain text password from the log files as needed.
 
-In this way, SvcWatchDog eliminates the need for a separate encryption tool by proactively guiding you through the process.
+In this way, **SvcWatchDog** eliminates the need for a separate encryption tool by proactively guiding you through the process.
 
-The actual encryption method used is AES-256/CBC/PKCS7, compatible with the following openssl command:
+The actual encryption method used is **AES-256/CBC/PKCS7**, compatible with the following openssl command:
 
 `openssl enc -base64 -e -aes-256-cbc -pbkdf2 -nosalt -pass pass:SuperSecretPassword`
 
