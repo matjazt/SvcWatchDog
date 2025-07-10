@@ -87,6 +87,8 @@
     <None Include="vcpkg-configuration.json" />
     <None Include="SvcWatchDog.json" />
     <None Include="SvcWatchDog.private.json" />
+    <None Include="LICENSE-Botan" />
+    <None Include="LICENSE-libcurl" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Include\SvcWatchDog\SvcWatchDog.rc">

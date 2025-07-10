@@ -160,7 +160,7 @@ int EmailSender::SendSimpleEmail(const string& subject, const string& utf8body, 
     // Check for errors
     if (res == CURLE_OK)
     {
-        LOGSTR(Information) << "Email sent successfully to " << toString;
+        LOGSTR(Information) << "email sent successfully to " << toString;
     }
     else
     {

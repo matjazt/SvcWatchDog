@@ -396,7 +396,9 @@ void SvcWatchDog::Run()
 
         while (processHandle >= 0 && exitCode == STILL_ACTIVE && (m_killTime == 0 || m_killTime > now))
         {
-            WaitForSingleObject(m_loopTriggerEvent, 200);
+            uint64_t loopStartTime = now;
+            DWORD loopDelay = 200;
+            WaitForSingleObject(m_loopTriggerEvent, loopDelay);
 
             exitCode = 0;
 #pragma warning(suppress : 6001)
@@ -421,8 +423,18 @@ void SvcWatchDog::Run()
 
                 if (now > nextPing)
                 {
-                    LOGSTR(Warning) << "child process stopped sending valid UDP ping packets, restarting it";
-                    InitiateProcessShutdown();
+                    // check for time anomalies, typically occuring when computer wakes up from sleep mode or hibernation
+                    if (now < loopStartTime || now > loopStartTime + 2ull * loopDelay + 3000)
+                    {
+                        LOGSTR() << "time changed for " << now - loopStartTime << " ms in about " << loopDelay
+                                 << " ms, ignoring missing UDP ping";
+                        nextPing = now + watchdogTimeout;
+                    }
+                    else
+                    {
+                        LOGSTR(Warning) << "child process stopped sending valid UDP ping packets, restarting it";
+                        InitiateProcessShutdown();
+                    }
                 }
             }
         }

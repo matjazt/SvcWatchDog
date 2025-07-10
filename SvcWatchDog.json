@@ -12,16 +12,16 @@
         "minLogLevel": 2,
         "recipients": [ "janet@example.com", "brad@example.com" ],
         "OPTIONAL subject": "dammit Janet",
-        "emailSection": "email-gmx",
+        "emailSection": "smtp.email-gmx",
         "maxDelay": 10,
         "maxLogs": 2000,
         "emailTimeoutOnShutdown": 2000
       },
-      "someMoreRecipients": {
+      "anotherRecipient": {
         "minLogLevel": 2,
         "recipients": [ "riff.raff@example.com" ],
         "subject": "time warp news",
-        "emailSection": "email-gmail",
+        "emailSection": "smtp.email-gmail",
         "maxDelay": 10,
         "maxLogs": 2000,
         "emailTimeoutOnShutdown": 2000
@@ -43,21 +43,23 @@
     "shutdownTime": 3000,
     "watchdogTimeout": 7000
   },
-  "email-gmail": {
-    "smtpServerUrl": "smtps://smtp.gmail.com:465",
-    "sslFlag": 3,
-    "defaultSourceAddress": "riff.raff at gmail.com",
-    "username": "riff.raff at gmail.com",
-    "password": "riff raff's application passkey",
-    "timeout": 10000
-  },
-  "email-gmx": {
-    "smtpServerUrl": "smtps://mail.gmx.com:465",
-    "sslFlag": 3,
-    "defaultSourceAddress": "riff raff at gmx.com",
-    "username": "riff raff at gmx.com",
-    "password": "riff raff's actual account password",
-    "timeout": 10000
+  "smtp": {
+    "email-gmail": {
+      "smtpServerUrl": "smtps://smtp.gmail.com:465",
+      "sslFlag": 3,
+      "defaultSourceAddress": "riff.raff at gmail.com",
+      "username": "riff.raff at gmail.com",
+      "password": "riff raff's application passkey",
+      "timeout": 10000
+    },
+    "email-gmx": {
+      "smtpServerUrl": "smtps://mail.gmx.com:465",
+      "sslFlag": 3,
+      "defaultSourceAddress": "riff raff at gmx.com",
+      "username": "riff raff at gmx.com",
+      "password": "riff raff's actual account password",
+      "timeout": 10000
+    }
   },
   "OPTIONAL cryptoTools": {
     "passwordFile": "C:\\Windows\\CryptoToolsPassword.txt"

@@ -270,8 +270,10 @@
   <ItemGroup>
     <None Include="ChangeLog.md" />
     <None Include="LICENSE" />
+    <None Include="LICENSE-Botan" />
     <None Include="LICENSE-CNTService" />
     <None Include="LICENSE-jsonhpp" />
+    <None Include="LICENSE-libcurl" />
     <None Include="README.md" />
     <None Include="Scripts\pack.bat" />
     <None Include="Scripts\TestService.ps1" />
