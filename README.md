@@ -265,6 +265,15 @@ The disclaimer for this library is included in file [LICENSE-libcurl](LICENSE-li
 
 - Botan library (<https://botan.randombit.net/>) is being used for encryption and decryption purposes. Thanks to 
 
+## False Positive Detection by ESET Internet Security
+When building **SvcWatchDog**, some users may encounter a false positive warning from ESET Internet Security, identifying
+the executable as **Win64/GenKryptik.HKHZ**. This issue appears to be triggered by the inclusion of **libcurl**, 
+which **SvcWatchDog** uses for secure email delivery via SMTP.
+Please be assured that **SvcWatchDog** contains no malicious code. It is a clean, open source utility, and you are welcome
+to inspect the source yourself to verify its integrity.
+A report has been submitted to ESET for whitelisting this detection. In the meantime, you may consider
+excluding the build directory from real-time antivirus scans.
+
 ## Competition
 There are several alternatives to **SvcWatchDog** available, including:
 - https://github.com/luisperezphd/RunAsService
