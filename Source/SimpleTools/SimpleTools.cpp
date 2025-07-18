@@ -63,20 +63,30 @@ uint64_t SteadyTime() noexcept
     return duration.count();
 }
 
-string GetExecutableName()
+filesystem::path GetExecutableFullPath()
 {
     char path[MAX_PATH];
 #ifdef _WIN32
     GetModuleFileNameA(NULL, path, sizeof(path) - 1);
 #else
-    // TODO: not tested on linux
     ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
-    if (len <= 0)
+    if (len > 0 && len < (ssize_t)(sizeof(path) - 1))
     {
-        return "unknown";
+        path[len] = 0;  // Null-terminate the string, because readlink does not do it
+    }
+    else
+    {
+        SAFE_STRING_COPY(path, "unknown");
     }
 #endif
-    return std::filesystem::path(path).stem().string();
+    AUTO_TERMINATE(path);
+    return filesystem::path(path);
+}
+
+string GetExecutableName()
+{
+    auto fullPath = GetExecutableFullPath();
+    return fullPath.stem().string();
 }
 
 string GetHostname()

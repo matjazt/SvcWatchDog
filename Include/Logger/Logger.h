@@ -10,9 +10,10 @@
 #define _LOGGER_H_
 
 #include <JsonConfig/JsonConfig.h>
+#include <vector>
 #include <queue>
 #include <sstream>
-#include <Email/EmailSender.h>
+#include <thread>
 
 enum LogLevel
 {
@@ -84,10 +85,9 @@ class Logger : public NoCopy
     // int m_emailTimeoutOnShutdown;
     bool m_logThreadId;
 
-    vector<unique_ptr<ILoggerPlugin>> m_plugins;
+    std::vector<unique_ptr<ILoggerPlugin>> m_plugins;
     bool m_mute;
     unique_ptr<queue<string>> m_fileQueue;
-    EmailSender m_emailSender;
     unique_ptr<queue<string>> m_emailQueue;
     uint64_t m_emailTimestamp;
     thread m_thread;
@@ -103,7 +103,9 @@ class Logger : public NoCopy
 };
 
 #define Lg (*Logger::GetInstance())
-#define LOGSTR(...) LoggerStream().GetEx(__FILE__, __FUNCTION__, __VA_ARGS__)  // optional log level
+#define LOGSTR(...) LoggerStream().GetEx(__FILE__, __FUNCTION__ __VA_OPT__(, __VA_ARGS__))  // optional log level;
+// note that __VA_OPT__ was introduced in C++20, so this macro will only work with C++20 or later. For earlier versions, you can
+// use compiler-specific hacks (like ##__VA_ARGS__ in GCC/Clang/MSVC)
 #define LOGMSG(LEVEL, MSG) Logger::GetInstance()->Log((LEVEL), (MSG), __FILE__, __FUNCTION__);
 #define LOGASSERT(CONDITION)                                                                                               \
     do                                                                                                                     \

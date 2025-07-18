@@ -11,6 +11,8 @@
 #include <string>
 #include <sstream>
 
+#include <inttypes.h>
+
 #include <JsonConfig/JsonConfig.h>
 
 JsonConfig* JsonConfig::m_instance = nullptr;
@@ -118,7 +120,7 @@ T JsonConfig::GetNumber(const string& path, const string& key, T defaultValue)
             // we probably have a hex number
             uint64_t hex;
             char unparsed;
-            if (sscanf(s.c_str(), "%llx%c", &hex, &unparsed) == 1)
+            if (sscanf(s.c_str(), "%" PRIX64 " %c", &hex, &unparsed) == 1)
             {
                 // we're deliberately ignoring the overflow check here (if (static_cast<uint64_t>(value) == hex))
                 return static_cast<T>(hex);

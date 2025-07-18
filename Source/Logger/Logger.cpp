@@ -13,6 +13,9 @@
 #include <fstream>
 #include <cstdarg>
 #include <chrono>
+#include <algorithm>
+#include <ranges>
+#include <assert.h>
 
 Logger* Logger::m_instance = nullptr;
 
@@ -65,7 +68,7 @@ void Logger::RegisterPlugin(unique_ptr<ILoggerPlugin> plugin) { m_plugins.emplac
 
 LogLevel Logger::GetMinPluginLevel()
 {
-    auto it = std::ranges::min_element(m_plugins, {}, &ILoggerPlugin::MinLogLevel);
+    auto it = ranges::min_element(m_plugins, {}, &ILoggerPlugin::MinLogLevel);
     return (it != m_plugins.end()) ? (*it)->MinLogLevel() : MaskAllLogs;
 }
 
@@ -143,7 +146,9 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
         // get the thread id - we deliberately truncate the hash to 32 bits, because it should be good enough for our purposes.
         const uint32_t threadIdHash = (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id());
         // convert it to a string
+#ifdef WIN32
 #pragma warning(suppress : 6031)
+#endif
         snprintf(threadIdPrefix, sizeof(threadIdPrefix), "%08x: ", threadIdHash);
         AUTO_TERMINATE(threadIdPrefix);
     }
@@ -312,7 +317,9 @@ void Logger::FlushFileQueue()
         GetCurrentLocalTime(localTime, dummy);
 
         char timestamp[32];
+#ifdef WIN32
 #pragma warning(suppress : 6031)
+#endif
         snprintf(timestamp, sizeof(timestamp) - 1, "%04d%02d%02d%02d%02d%02d", localTime->tm_year + 1900, localTime->tm_mon + 1,
                  localTime->tm_mday, localTime->tm_hour, localTime->tm_min, localTime->tm_sec);
         AUTO_TERMINATE(timestamp);
@@ -325,7 +332,7 @@ void Logger::FlushFileQueue()
         // remove old files if needed
         if (m_maxOldFiles > 0)
         {
-            vector<filesystem::path> oldFiles;
+            std::vector<filesystem::path> oldFiles;
 
             // iterate through the directory and create a list of all old files
             auto folderIterator = filesystem::directory_iterator(m_filePath.parent_path());
@@ -341,7 +348,7 @@ void Logger::FlushFileQueue()
             if (oldFiles.size() > m_maxOldFiles)
             {
                 // sort old files by name (name should contain timestamp, so we're basically sorting by time)
-                sort(oldFiles.begin(), oldFiles.end());
+                std::sort(oldFiles.begin(), oldFiles.end());
 
                 // remove the oldest files
                 for (size_t i = 0; i < oldFiles.size() - m_maxOldFiles; i++)

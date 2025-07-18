@@ -10,8 +10,12 @@
 #define _SIMPLETOOLS_H_
 
 #include <string>
+#include <vector>
 #include <filesystem>
 #include <mutex>
+#include <condition_variable>
+
+#include <string.h>
 
 using namespace std;
 
@@ -80,6 +84,7 @@ void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds) noexcept;
 uint64_t SteadyTime() noexcept;
 #define SLEEP(MILLISECONDS) std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS))
 
+filesystem::path GetExecutableFullPath();
 string GetExecutableName();
 string GetHostname();
 
@@ -98,8 +103,8 @@ string NumberFormat(T num, const char* formatString);
 #define FLOATFULL(f) NumberFormat((f), "%3.17lf")
 #define BOOL2STR(b) ((b) ? "true" : "false")
 
-vector<string> Split(const string& str, char delimiter);
-string JoinStrings(const vector<string>& words, const string& delimiter);
+std::vector<string> Split(const string& str, char delimiter);
+string JoinStrings(const std::vector<string>& words, const string& delimiter);
 string TrimEx(const string& str, const string& leftTrimChars, const string& rightTrimChars);
 string Trim(const string& str, const string& trimChars = " \t\n\r\f\v");
 string TrimLeft(const string& str, const string& trimChars = " \t\n\r\f\v");
@@ -147,12 +152,11 @@ string TrimRight(const string& str, const string& trimChars = " \t\n\r\f\v");
 #define _MAX_PATH 256
 #define MAX_PATH 256
 
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#define min(a, b) (((a) < (b)) ? (a) : (b))
+// #define max(a, b) (((a) > (b)) ? (a) : (b))
+// #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 #define _chdir(d) chdir(d)
-
-int GetModuleFileName(void* pDummy, char* achBuf, int iBufLen);
+#define _vsnprintf vsnprintf
 
 // #include <assert.h>
 

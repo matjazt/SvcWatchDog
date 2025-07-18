@@ -10,6 +10,7 @@
 #define _LOGGEREMAILPLUGIN_H_
 
 #include <Logger/Logger.h>
+#include <Email/EmailSender.h>
 
 class LoggerEmailPlugin : public ILoggerPlugin, NoCopy
 {
