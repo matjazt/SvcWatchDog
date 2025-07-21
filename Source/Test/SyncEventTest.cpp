@@ -37,7 +37,7 @@ void SyncEventTest(bool autoReset)
                 {
                     // wait for the event to be set
                     const bool signaled = event.WaitForSingleEvent(1100);
-                    lock_guard lock(mtx);
+                    const lock_guard lock(mtx);
                     if (signaled)
                     {
                         threadSignalCounter++;

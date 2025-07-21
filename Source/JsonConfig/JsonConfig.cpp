@@ -11,22 +11,22 @@
 #include <string>
 #include <sstream>
 
-#include <inttypes.h>
+#include <cinttypes>
 
 #include <JsonConfig/JsonConfig.h>
 
 JsonConfig* JsonConfig::m_instance = nullptr;
 
-JsonConfig::JsonConfig() noexcept {}
+JsonConfig::JsonConfig() noexcept = default;
 
-JsonConfig::~JsonConfig() {}
+JsonConfig::~JsonConfig() = default;
 
 JsonConfig* JsonConfig::GetInstance() noexcept { return m_instance; }
 void JsonConfig::SetInstance(JsonConfig* instance) noexcept { m_instance = instance; }
 
 void JsonConfig::Load(const filesystem::path& filePath)
 {
-    string jsonText = LoadTextFile(filePath);
+    const string jsonText = LoadTextFile(filePath);
     try
     {
         m_json = json::parse(jsonText);
@@ -34,7 +34,7 @@ void JsonConfig::Load(const filesystem::path& filePath)
     catch (...)
     {
         // show the file contents
-        cerr << "JSON file:" << endl << jsonText << endl;
+        cerr << "JSON file\n:" << jsonText << "\n";
         throw;
     }
 }
@@ -71,11 +71,11 @@ T JsonConfig::GetParameter(const string& path, const string& key, T defaultValue
     try
     {
         const auto* parameter = FindKey(path, key);
-        return parameter ? parameter->get<T>() : defaultValue;
+        return parameter ? parameter->get<T>() : std::move(defaultValue);
     }
     catch (...)
     {
-        return defaultValue;
+        return std::move(defaultValue);
     }
 }
 
@@ -114,12 +114,12 @@ T JsonConfig::GetNumber(const string& path, const string& key, T defaultValue)
     // so the key is present, but it is not a number
     try
     {
-        string s = parameter->get<string>();
-        if (s.rfind("0x", 0) == 0 || s.rfind("0X", 0) == 0)
+        const string s = parameter->get<string>();
+        if (s.starts_with("0x") || s.starts_with("0X"))
         {
             // we probably have a hex number
-            uint64_t hex;
-            char unparsed;
+            uint64_t hex = 0;
+            char unparsed = 0;
             if (sscanf(s.c_str(), "%" PRIX64 " %c", &hex, &unparsed) == 1)
             {
                 // we're deliberately ignoring the overflow check here (if (static_cast<uint64_t>(value) == hex))
@@ -151,7 +151,7 @@ bool JsonConfig::GetBool(const string& path, const string& key, bool defaultValu
 
 vector<string> JsonConfig::GetStringVector(const string& path, const string& key, vector<string> defaultValue)
 {
-    return GetParameter(path, key, defaultValue);
+    return GetParameter(path, key, std::move(defaultValue));
 }
 
 vector<string> JsonConfig::GetKeys(const string& path, bool includeObjects = true, bool includeArrays = true, bool includeOthers = true)
@@ -162,7 +162,7 @@ vector<string> JsonConfig::GetKeys(const string& path, bool includeObjects = tru
     {
         for (auto& item : section->items())
         {
-            bool includeItem;
+            bool includeItem = false;
             if (item.value().is_object())
             {
                 includeItem = includeObjects;

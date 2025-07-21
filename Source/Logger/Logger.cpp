@@ -15,7 +15,7 @@
 #include <chrono>
 #include <algorithm>
 #include <ranges>
-#include <assert.h>
+#include <cassert>
 
 Logger* Logger::m_instance = nullptr;
 
@@ -27,12 +27,11 @@ Logger::Logger() noexcept
       m_maxOldFiles(0),
       m_logThreadId(false),
       m_mute(false),
+      m_fileQueue(std::make_unique<queue<string>>()),
       m_emailTimestamp(0),
       m_threadTrigger(false, true),  // initialize the event with auto-reset, although it's not strictly necessary here
       m_running(false)
 {
-    m_fileQueue = std::make_unique<queue<string>>();
-    m_emailQueue = std::make_unique<queue<string>>();
 }
 
 Logger::~Logger() { Shutdown(); }
@@ -45,7 +44,7 @@ void Logger::Configure(JsonConfig& cfg, const string& section)
 {
     m_minConsoleLevel = (LogLevel)cfg.GetNumber(section, "minConsoleLevel", (int)LogLevel::Verbose);
     m_minFileLevel = (LogLevel)cfg.GetNumber(section, "minFileLevel", (int)LogLevel::Verbose);
-    string tmp = cfg.GetString(section, "filePath", "");
+    const string tmp = cfg.GetString(section, "filePath", "");
     if (tmp.empty())
     {
         // if no file path is provided, disable file logging
@@ -108,13 +107,13 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     }
 
     // if file and function are provided, use them to get the location prefix
-    string locationPrefix = (file && func) ? GetLocationPrefix(file, func) : "";
+    const string locationPrefix = (file && func) ? GetLocationPrefix(file, func) : "";
 
-    struct tm* localTime;
-    int milliseconds;
+    struct tm localTime = {};
+    int milliseconds = 0;
     GetCurrentLocalTime(localTime, milliseconds);
 
-    const char* levelName;
+    const char* levelName = nullptr;
     switch (level)
     {
         case LogLevel::Verbose:
@@ -163,10 +162,9 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     const size_t maxSize = message.length() + locationPrefix.length() + 60;  // 60 - timestamp, log level, threadId etc
     string fullMessage;
     fullMessage.resize(maxSize);  // 50 - timestamp, log level etc
-    size_t actualLength =
-        snprintf(&fullMessage[0], maxSize - 1, "%04d-%02d-%02d %02d:%02d:%02d.%03d [%s] %s%s%s\n", localTime->tm_year + 1900,
-                 localTime->tm_mon + 1, localTime->tm_mday, localTime->tm_hour, localTime->tm_min, localTime->tm_sec, milliseconds,
-                 levelName, threadIdPrefix, locationPrefix.c_str(), message.c_str());
+    size_t actualLength = snprintf(&fullMessage[0], maxSize - 1, "%04d-%02d-%02d %02d:%02d:%02d.%03d [%s] %s%s%s\n",
+                                   localTime.tm_year + 1900, localTime.tm_mon + 1, localTime.tm_mday, localTime.tm_hour, localTime.tm_min,
+                                   localTime.tm_sec, milliseconds, levelName, threadIdPrefix, locationPrefix.c_str(), message.c_str());
     if (actualLength < 0)
     {
         // snprintf failed, so the buffer is obviously too small. It shouldn't happen, but let's handle it anyway.
@@ -176,7 +174,7 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     fullMessage.resize(actualLength);
 
     // now obtain the lock to avoid messing up the output or crashing the queue when multiple threads are logging
-    lock_guard<mutex> lock(m_cs);
+    const lock_guard<mutex> lock(m_cs);
 
     // console output
     if (m_minConsoleLevel <= level)
@@ -252,13 +250,13 @@ void Logger::Flush(bool force)
     catch (const std::exception& e)
     {
         // we can't afford to properly log exceptions here, because it might push us into a loop.
-        cerr << "Logger::Thread: exception while flushing file queue: " << e.what() << endl;
+        cerr << "Logger::Thread: exception while flushing file queue: " << e.what() << "\n";
         // For the time being, we're just catching the exception and hope it was temporary.
     }
     catch (...)
     {
         // we can't afford to properly log exceptions here, because it might push us into a loop.
-        cerr << "Logger::Thread: exception while flushing file queue" << endl;
+        cerr << "Logger::Thread: exception while flushing file queue\n";
         // For the time being, we're just catching the exception and hope it was temporary.
     }
 
@@ -312,16 +310,16 @@ void Logger::FlushFileQueue()
     if (m_maxFileSize > 0 && fileSize > m_maxFileSize)
     {
         // file grew too large, rename it
-        struct tm* localTime;
-        int dummy;
+        struct tm localTime = {};
+        int dummy = 0;
         GetCurrentLocalTime(localTime, dummy);
 
         char timestamp[32];
 #ifdef WIN32
 #pragma warning(suppress : 6031)
 #endif
-        snprintf(timestamp, sizeof(timestamp) - 1, "%04d%02d%02d%02d%02d%02d", localTime->tm_year + 1900, localTime->tm_mon + 1,
-                 localTime->tm_mday, localTime->tm_hour, localTime->tm_min, localTime->tm_sec);
+        snprintf(timestamp, sizeof(timestamp) - 1, "%04d%02d%02d%02d%02d%02d", localTime.tm_year + 1900, localTime.tm_mon + 1,
+                 localTime.tm_mday, localTime.tm_hour, localTime.tm_min, localTime.tm_sec);
         AUTO_TERMINATE(timestamp);
 
         auto extension = m_filePath.extension();
@@ -339,7 +337,7 @@ void Logger::FlushFileQueue()
             for (const auto& entry : folderIterator)
             {
                 if (entry.is_regular_file() && entry.path().extension() == extension &&
-                    entry.path().stem().string().find(baseName.string()) == 0)
+                    entry.path().stem().string().starts_with(baseName.string()))
                 {
                     oldFiles.push_back(entry.path());
                 }
@@ -348,7 +346,7 @@ void Logger::FlushFileQueue()
             if (oldFiles.size() > m_maxOldFiles)
             {
                 // sort old files by name (name should contain timestamp, so we're basically sorting by time)
-                std::sort(oldFiles.begin(), oldFiles.end());
+                std::ranges::sort(oldFiles);
 
                 // remove the oldest files
                 for (size_t i = 0; i < oldFiles.size() - m_maxOldFiles; i++)
@@ -385,7 +383,7 @@ string Logger::GetLocationPrefix(const char* file, const char* func)
         f++;
     }
 
-    string fileName(f, dot - f + 1);
+    const string fileName(f, dot - f + 1);
     if (dot == g)
     {
         // dot not found in file name (strange, but possible I guess)
@@ -397,12 +395,7 @@ string Logger::GetLocationPrefix(const char* file, const char* func)
     }
 }
 
-LoggerStream::LoggerStream() noexcept
-{
-    m_level = Debug;
-    m_file = nullptr;
-    m_func = nullptr;
-}
+LoggerStream::LoggerStream() noexcept : m_file(nullptr), m_func(nullptr), m_level(LogLevel::Debug) {}
 
 std::ostringstream& LoggerStream::Get(LogLevel level) noexcept
 {

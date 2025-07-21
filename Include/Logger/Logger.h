@@ -88,7 +88,6 @@ class Logger : public NoCopy
     std::vector<unique_ptr<ILoggerPlugin>> m_plugins;
     bool m_mute;
     unique_ptr<queue<string>> m_fileQueue;
-    unique_ptr<queue<string>> m_emailQueue;
     uint64_t m_emailTimestamp;
     thread m_thread;
     SyncEvent m_threadTrigger;

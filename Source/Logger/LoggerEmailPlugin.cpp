@@ -22,10 +22,9 @@ void LoggerEmailPlugin::ConfigureAll(JsonConfig& cfg, Logger& logger, const stri
     }
 }
 
-LoggerEmailPlugin::LoggerEmailPlugin(JsonConfig& cfg, const string& section) : m_queueTimestamp(0)
+LoggerEmailPlugin::LoggerEmailPlugin(JsonConfig& cfg, const string& section)
+    : m_queue(std::make_unique<queue<string>>()), m_queueTimestamp(0)
 {
-    m_queue = std::make_unique<queue<string>>();
-
     m_minLogLevel = (LogLevel)cfg.GetNumber(section, "minLogLevel", (int)LogLevel::Verbose);
     m_recipients = cfg.GetStringVector(section, "recipients");
     m_subject = cfg.GetString(section, "subject", "");
@@ -59,7 +58,7 @@ LoggerEmailPlugin::LoggerEmailPlugin(JsonConfig& cfg, const string& section) : m
     }
 }
 
-LoggerEmailPlugin::~LoggerEmailPlugin() {}
+LoggerEmailPlugin::~LoggerEmailPlugin() = default;
 
 LogLevel LoggerEmailPlugin::MinLogLevel() { return m_minLogLevel; }
 

@@ -21,9 +21,9 @@ using namespace Botan;
 
 CryptoTools* CryptoTools::m_instance = nullptr;
 
-CryptoTools::CryptoTools() noexcept {}
+CryptoTools::CryptoTools() noexcept = default;
 
-CryptoTools::~CryptoTools() {}
+CryptoTools::~CryptoTools() = default;
 
 CryptoTools* CryptoTools::GetInstance() noexcept { return m_instance; }
 
@@ -33,13 +33,13 @@ void CryptoTools::Configure(JsonConfig& cfg, const string& section, const string
 {
     string password;
 
-    string passwordFile = section.empty() ? "" : cfg.GetString(section, "passwordFile", "");
+    const string passwordFile = section.empty() ? "" : cfg.GetString(section, "passwordFile", "");
 
     if (!passwordFile.empty())
     {
         try
         {
-            string passwordData = LoadTextFile(passwordFile);
+            const string passwordData = LoadTextFile(passwordFile);
             // Take all regular ascii characters from the file. Ignore non-ascii ones to avoid issues, caused by invisible characters
             // (such as \n and \r) and various spaces (regular space, tab...).
             for (auto c : passwordData)

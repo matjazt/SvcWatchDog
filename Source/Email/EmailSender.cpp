@@ -17,7 +17,7 @@ EmailSender* EmailSender::m_instance = nullptr;
 
 EmailSender::EmailSender() noexcept : m_sslFlag(CURLUSESSL_ALL), m_timeout(120000) {}
 
-EmailSender::~EmailSender() {}
+EmailSender::~EmailSender() = default;
 
 EmailSender* EmailSender::GetInstance() noexcept { return m_instance; }
 
@@ -85,7 +85,7 @@ size_t payload_source(char* ptr, size_t size, size_t nmemb, void* userp)
 int EmailSender::SendSimpleEmail(const string& subject, const string& utf8body, const vector<string>& toAddresses,
                                  const string& fromAddress, int timeout)
 {
-    string toString = JoinStrings(toAddresses, ",");
+    const string toString = JoinStrings(toAddresses, ",");
     LOGSTR(Information) << "sending email to " << toString;
 
     // TODO: verify that the addresses are valid email address, verify that subject is syntatically correct, etc.

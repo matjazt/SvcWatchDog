@@ -19,19 +19,19 @@
 
 using namespace std;
 
-#define SAFE_STRING_COPY(t, s)                                                                              \
-    do                                                                                                      \
-    {                                                                                                       \
-        static_assert(std::is_array<decltype(t)>::value, "Error: target must be an array, not a pointer!"); \
-        strncpy((t), (s), sizeof(t) - 1);                                                                   \
-        (t)[sizeof(t) - 1] = 0;                                                                             \
+#define SAFE_STRING_COPY(t, s)                                                                         \
+    do                                                                                                 \
+    {                                                                                                  \
+        static_assert(std::is_array_v<decltype(t)>, "Error: target must be an array, not a pointer!"); \
+        strncpy((t), (s), sizeof(t) - 1);                                                              \
+        (t)[sizeof(t) - 1] = 0;                                                                        \
     } while (0)
 
-#define AUTO_TERMINATE(s)                                                                                      \
-    do                                                                                                         \
-    {                                                                                                          \
-        static_assert(std::is_array<decltype(s)>::value, "Error: parameter must be an array, not a pointer!"); \
-        s[sizeof(s) - 1] = 0;                                                                                  \
+#define AUTO_TERMINATE(s)                                                                                 \
+    do                                                                                                    \
+    {                                                                                                     \
+        static_assert(std::is_array_v<decltype(s)>, "Error: parameter must be an array, not a pointer!"); \
+        s[sizeof(s) - 1] = 0;                                                                             \
     } while (0)
 
 #define SAFE_DELETE(x)   \
@@ -79,7 +79,7 @@ using namespace std;
 
 string LoadTextFile(const filesystem::path& filePath);
 
-void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds) noexcept;
+void GetCurrentLocalTime(struct tm& localTime, int& milliseconds) noexcept;
 
 uint64_t SteadyTime() noexcept;
 #define SLEEP(MILLISECONDS) std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS))

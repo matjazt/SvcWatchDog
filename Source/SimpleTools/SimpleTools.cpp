@@ -10,7 +10,7 @@
 #include <windows.h>
 #else
 #include <unistd.h>
-#include <limits.h>
+#include <climits>
 #endif
 
 #include <SimpleTools/SimpleTools.h>
@@ -34,24 +34,31 @@ string LoadTextFile(const filesystem::path& filePath)
 
     // Move the file pointer to the end to get the file size
     file.seekg(0, std::ios::end);
-    const auto fileSize = (size_t)file.tellg();
+    const auto fileSize = file.tellg();
     file.seekg(0, std::ios::beg);
 
     // Reserve space and read the entire file into a string
     std::string content;
-    content.resize(fileSize);
+    content.resize((size_t)fileSize);
     file.read(&content[0], fileSize);
 
     return content;
 }
 
-void GetCurrentLocalTime(struct tm*& localTime, int& milliseconds) noexcept
+void GetCurrentLocalTime(struct tm& localTime, int& milliseconds) noexcept
 {
     // Get the current time as a time_point
     const auto now = std::chrono::system_clock::now();
     // Convert to time_t for formatting (seconds precision)
     const auto now_time = std::chrono::system_clock::to_time_t(now);
-    localTime = std::localtime(&now_time);
+
+#if defined(_MSC_VER)
+    localtime_s(&localTime, &now_time);
+#else
+    localtime_r(&now_time, &localTime);
+#endif
+
+    // localTime = std::localtime(&now_time);
     // Extract milliseconds from the current time_point
     milliseconds = (int)(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000).count();
 }
@@ -69,7 +76,7 @@ filesystem::path GetExecutableFullPath()
 #ifdef _WIN32
     GetModuleFileNameA(NULL, path, sizeof(path) - 1);
 #else
-    ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+    const ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
     if (len > 0 && len < (ssize_t)(sizeof(path) - 1))
     {
         path[len] = 0;  // Null-terminate the string, because readlink does not do it
@@ -163,15 +170,11 @@ string TrimRight(const string& str, const string& trimChars) { return TrimEx(str
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SyncEvent::SyncEvent(bool initialState, bool autoReset)
-{
-    m_signaled = initialState;
-    m_autoReset = autoReset;
-}
+SyncEvent::SyncEvent(bool initialState, bool autoReset) : m_autoReset(autoReset), m_signaled(initialState) {}
 
 bool SyncEvent::SetEvent()
 {
-    lock_guard<mutex> lock(m_mtx);
+    const lock_guard<mutex> lock(m_mtx);
     const bool wasSignaled = m_signaled;
     m_signaled = true;
     if (m_autoReset)
@@ -189,7 +192,7 @@ bool SyncEvent::SetEvent()
 
 bool SyncEvent::ResetEvent()
 {
-    lock_guard<mutex> lock(m_mtx);
+    const lock_guard<mutex> lock(m_mtx);
     const bool wasSignaled = m_signaled;
     m_signaled = false;
     return wasSignaled;
