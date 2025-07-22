@@ -229,7 +229,7 @@ The actual encryption method used is **AES-256/CBC/PKCS7**, compatible with the 
 
 `openssl enc -base64 -e -aes-256-cbc -pbkdf2 -nosalt -pass pass:SuperSecretPassword`
 
-While the choice of encryption algorithm is important (assuming it’s not severely outdated), the location of the master password
+While the choice of encryption algorithm is important, the location of the master password
 used to encrypt and decrypt the SMTP password plays an even more critical role in overall security.
 **SvcWatchDog** offers two options for managing this master password:
 - Store it in a dedicated text file (using all ASCII characters in the file), or
@@ -263,7 +263,7 @@ The disclaimer for this library is included in file [LICENSE-jsonhpp](LICENSE-js
 - libcurl (<https://curl.se/libcurl/>) is being used for SMTP email delivery. Thanks to Daniel Stenberg and contributors!
 The disclaimer for this library is included in file [LICENSE-libcurl](LICENSE-libcurl).
 
-- Botan library (<https://botan.randombit.net/>) is being used for encryption and decryption purposes. Thanks to 
+- Botan library (<https://botan.randombit.net/>) is being used for encryption and decryption purposes. Thanks to authors and contributors!
 
 ## False Positive Detection by ESET Internet Security
 When building **SvcWatchDog**, some users may encounter a false positive warning from ESET Internet Security, identifying
