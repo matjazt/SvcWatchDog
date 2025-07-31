@@ -55,7 +55,6 @@ void CryptoTools::Configure(JsonConfig& cfg, const string& section, const string
             LOGSTR(Error) << "unable to load default password from " << passwordFile;
         }
 
-        // this one is out of the cash
         if (password.length() < 12)
         {
             LOGSTR(Error) << "password file " << passwordFile << " is too short, at least 12 characters are required";

@@ -27,10 +27,10 @@ void EmailSender::Configure(JsonConfig& cfg, const string& section)
 {
     LOGSTR() << "reading configuration from section: " << section;
 
-    m_smtpServerUrl = cfg.GetString(section, "smtpServerUrl", "");
-    LOGSTR() << "smtpServer=" << m_smtpServerUrl;
+    m_smtpServerUrl = Crypto.GetPossiblyEncryptedConfigurationString(Cfg, section, "smtpServerUrl", "");
+    LOGSTR() << "smtpServerUrl=" << m_smtpServerUrl;
 
-    m_defaultSourceAddress = cfg.GetString(section, "defaultSourceAddress", "");
+    m_defaultSourceAddress = Crypto.GetPossiblyEncryptedConfigurationString(Cfg, section, "defaultSourceAddress", "");
     LOGSTR() << "defaultSourceAddress=" << m_defaultSourceAddress;
 
     if (m_smtpServerUrl.empty() || m_defaultSourceAddress.empty())
@@ -42,7 +42,7 @@ void EmailSender::Configure(JsonConfig& cfg, const string& section)
     m_sslFlag = cfg.GetNumber(section, "sslFlag", m_sslFlag);
     LOGSTR() << "sslFlag=" << m_sslFlag;
 
-    m_username = cfg.GetString(section, "username", "");
+    m_username = Crypto.GetPossiblyEncryptedConfigurationString(Cfg, section, "username", "");
     LOGSTR() << "username=" << m_username;
 
     m_password = Crypto.GetPossiblyEncryptedConfigurationString(Cfg, section, "password", "");
