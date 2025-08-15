@@ -24,6 +24,8 @@
 #include <direct.h>
 #include <iostream>
 
+using namespace std;
+
 SvcWatchDog* SvcWatchDog::m_instance = nullptr;
 
 // NOTE: when you increment version, you have to do it here as well as in the resource file (but keep the fourth number at 0, as we're only

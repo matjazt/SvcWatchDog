@@ -36,26 +36,26 @@ class JsonConfig : public NoCopy
     static JsonConfig* GetInstance() noexcept;
     static void SetInstance(JsonConfig* instance) noexcept;
 
-    void Load(const filesystem::path& filePath);
-    json* GetJson(const string& path = "");
+    void Load(const std::filesystem::path& filePath);
+    json* GetJson(const std::string& path = "");
 
-    string GetString(const string& path, const string& key, const string& defaultValue = "");
-    int GetString(const string& path, const string& key, char* buffer, size_t bufferSize, const string& defaultValue = "");
+    std::string GetString(const std::string& path, const std::string& key, const std::string& defaultValue = "");
+    int GetString(const std::string& path, const std::string& key, char* buffer, size_t bufferSize, const std::string& defaultValue = "");
 
     template <typename T>
-    T GetNumber(const string& path, const string& key, T defaultValue);
-    bool GetBool(const string& path, const string& key, bool defaultValue = false);
-    vector<string> GetStringVector(const string& path, const string& key, vector<string> defaultValue = {});
-    vector<string> GetKeys(const string& path, bool includeObjects, bool includeArrays, bool includeOthers);
+    T GetNumber(const std::string& path, const std::string& key, T defaultValue);
+    bool GetBool(const std::string& path, const std::string& key, bool defaultValue = false);
+    std::vector<std::string> GetStringVector(const std::string& path, const std::string& key, std::vector<std::string> defaultValue = {});
+    std::vector<std::string> GetKeys(const std::string& path, bool includeObjects, bool includeArrays, bool includeOthers);
 
    private:
     static JsonConfig* m_instance;
 
     json m_json;
 
-    json* FindKey(const string& path, const string& key);
+    json* FindKey(const std::string& path, const std::string& key);
     template <typename T>
-    T GetParameter(const string& path, const string& key, T defaultValue);
+    T GetParameter(const std::string& path, const std::string& key, T defaultValue);
 };
 
 #define Cfg (*JsonConfig::GetInstance())

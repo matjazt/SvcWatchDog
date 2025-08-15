@@ -11,13 +11,12 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <filesystem>
 #include <mutex>
 #include <condition_variable>
 
 #include <string.h>
-
-using namespace std;
 
 #define SAFE_STRING_COPY(t, s)                                                                         \
     do                                                                                                 \
@@ -77,16 +76,16 @@ using namespace std;
 #define EMPTYIFNULL(s) ((s) ? (s) : "")
 #define NULLOREMPTY(s) ((s) == nullptr || *(s) == 0)
 
-string LoadTextFile(const filesystem::path& filePath);
+std::string LoadTextFile(const std::filesystem::path& filePath);
 
 void GetCurrentLocalTime(struct tm& localTime, int& milliseconds) noexcept;
 
 uint64_t SteadyTime() noexcept;
 #define SLEEP(MILLISECONDS) std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS))
 
-filesystem::path GetExecutableFullPath();
-string GetExecutableName();
-string GetHostname();
+std::filesystem::path GetExecutableFullPath();
+std::string GetExecutableName();
+std::string GetHostname();
 
 class NoCopy
 {
@@ -98,17 +97,18 @@ class NoCopy
 };
 
 template <typename T>
-string NumberFormat(T num, const char* formatString);
+std::string NumberFormat(T num, const char* formatString);
 #define FLOAT2(f) NumberFormat((f), "%3.2lf")
 #define FLOATFULL(f) NumberFormat((f), "%3.17lf")
 #define BOOL2STR(b) ((b) ? "true" : "false")
 
-std::vector<string> Split(const string& str, char delimiter);
-string JoinStrings(const std::vector<string>& words, const string& delimiter);
-string TrimEx(const string& str, const string& leftTrimChars, const string& rightTrimChars);
-string Trim(const string& str, const string& trimChars = " \t\n\r\f\v");
-string TrimLeft(const string& str, const string& trimChars = " \t\n\r\f\v");
-string TrimRight(const string& str, const string& trimChars = " \t\n\r\f\v");
+std::vector<std::string> Split(const std::string& str, char delimiter);
+std::string JoinStrings(const std::vector<std::string>& words, const std::string& delimiter);
+std::string TrimEx(const std::string& str, const std::string& leftTrimChars, const std::string& rightTrimChars);
+std::string Trim(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
+std::string TrimLeft(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
+std::string TrimRight(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
+std::string GetLocationPrefix(const char* file, const char* func);
 
 #ifdef WIN32
 
@@ -131,10 +131,6 @@ string TrimRight(const string& str, const string& trimChars = " \t\n\r\f\v");
 
 #define UNIX
 
-// #include <unistd.h>
-// #include <pthread.h>
-// #include <errno.h>
-
 #define SOCKET int
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
@@ -152,13 +148,8 @@ string TrimRight(const string& str, const string& trimChars = " \t\n\r\f\v");
 #define _MAX_PATH 256
 #define MAX_PATH 256
 
-// #define max(a, b) (((a) > (b)) ? (a) : (b))
-// #define min(a, b) (((a) < (b)) ? (a) : (b))
-
 #define _chdir(d) chdir(d)
 #define _vsnprintf vsnprintf
-
-// #include <assert.h>
 
 #define _ftime ftime
 #define _timeb struct timeb
@@ -219,9 +210,251 @@ class SyncEvent : public NoCopy
 
    private:
     bool m_autoReset;
-    mutex m_mtx;
-    condition_variable m_cv;
+    std::mutex m_mtx;
+    std::condition_variable m_cv;
     bool m_signaled;
 };
+
+/**
+ * @class Stopwatch
+ * @brief A high-precision timing utility class for measuring both wall clock and CPU time.
+ *
+ * The Stopwatch class provides functionality to measure elapsed time using two different timing mechanisms:
+ * - Wall clock time (real-world time) using std::chrono::steady_clock
+ * - CPU time (processor time consumed by the current process) using std::clock
+ *
+ * The stopwatch automatically starts timing upon construction and can be controlled with Start() and Stop() methods.
+ * Time measurements can be retrieved even while the stopwatch is running, providing real-time elapsed time information.
+ *
+ * @note Wall clock time represents actual elapsed time, while CPU time represents the amount of
+ *       processor time consumed by the program. These values may differ significantly in
+ *       multi-threaded applications or when the process is suspended.
+ */
+class Stopwatch : public NoCopy
+{
+   public:
+    /**
+     * @brief Default constructor that initializes the stopwatch and immediately starts timing.
+     */
+    Stopwatch(std::string name = "");
+
+    /**
+     * @brief Starts or restarts the timing measurement.
+     *
+     * Records the current wall clock time using std::chrono::steady_clock and the current
+     * CPU time using std::clock() as the starting reference points. Sets the stopwatch
+     * to running state, allowing elapsed time calculations.
+     *
+     * @note If the stopwatch is already running, this method will restart the timing
+     *       from the current moment, discarding any previous timing data.
+     */
+    void Start();
+
+    /**
+     * @brief Stops the timing measurement and records the end times.
+     *
+     * Captures the current wall clock time and CPU time as end points for timing calculations.
+     * Sets the stopwatch to stopped state. After stopping, elapsed time methods will return
+     * the time duration between the last Start() and this Stop() call.
+     *
+     * @note If ElapsedWallMilliseconds() or ElapsedCpuMilliseconds() are called after stopping,
+     *       they will return the elapsed time from the last Start() to Stop() interval.
+     */
+    void Stop();
+
+    /**
+     * @brief Returns the elapsed wall clock time in milliseconds.
+     *
+     * Calculates the elapsed real-world time since the last Start() call. If the stopwatch
+     * is currently running, returns the time elapsed up to the current moment. If stopped,
+     * returns the time elapsed between the last Start() and Stop() calls.
+     *
+     * @return double The elapsed wall clock time in milliseconds with high precision.
+     */
+    double ElapsedWallMilliseconds() const;
+
+    /**
+     * @brief Returns the elapsed CPU time in milliseconds.
+     *
+     * Calculates the amount of processor time consumed by the current process since the
+     * last Start() call. If the stopwatch is currently running, returns the CPU time
+     * consumed up to the current moment. If stopped, returns the CPU time consumed
+     * between the last Start() and Stop() calls.
+     *
+     * @return double The elapsed CPU time in milliseconds.
+     *
+     * @note CPU time represents actual processor time used by the program and may be
+     *       significantly different from wall clock time, especially in multi-threaded
+     *       applications or when the process is waiting for I/O operations.
+     */
+    double ElapsedCpuMilliseconds() const;
+
+    /**
+     * @brief Returns a human-readable summary of the stopwatch.
+     */
+    std::string SummaryText() const;
+
+   private:
+    std::string m_name;
+    std::chrono::steady_clock::time_point m_startWall, m_endWall;
+    std::clock_t m_startCpu = 0, m_endCpu = 0;
+    bool m_running = false;
+};
+
+/**
+ * @class CallGraphMonitor
+ * @brief Provides performance monitoring capabilities for function call hierarchies.
+ *
+ * This class tracks function entry/exit times and maintains statistics about call patterns
+ * and execution durations. The class follows a singleton pattern and is designed
+ * to be thread-safe for basic operations.
+ *
+ * Key features:
+ * - Tracks nested function calls as a call stack
+ * - Maintains execution time statistics per unique call path
+ * - Provides summary reports sorted by total execution time
+ * - Integrates with CallGraphMonitorAgent for automatic scope-based monitoring
+ *
+ * Usage:
+ *   1. Set a singleton instance using SetInstance() or use the CALL_GRAPH_MONITOR_INITIALIZE macro
+ *   2. Use CALL_GRAPH_MONITOR_AGENT macro at the beginning of functions to automatically track calls
+ *   3. Call SummaryText() to get performance statistics or use the CALL_GRAPH_MONITOR_LOG_STATS macro
+ *
+ * TODO:
+ *   - on startup, measure the overhead of the monitoring system itself and later substract it from the
+ *     measured timings
+ *   - detect methods which are to fast to be measured accurately and report them as such
+ *
+ * @note The associated macros are controlled by the CALL_GRAPH_MONITOR_ENABLED preprocessor definition.
+ *       When this symbol is not defined (which is the default), the macros expand to empty statements,
+ *       ensuring zero runtime overhead.
+ */
+class CallGraphMonitor : public NoCopy
+{
+   public:
+    /**
+     * @brief Default constructor that initializes the call graph monitor.
+     */
+    CallGraphMonitor() noexcept;
+
+    /**
+     * @brief Gets the current singleton instance of the call graph monitor.
+     * @return Pointer to the current instance, or nullptr if not set.
+     */
+    static CallGraphMonitor* GetInstance() noexcept;
+
+    /**
+     * @brief Sets the singleton instance of the call graph monitor.
+     * @param instance Pointer to the CallGraphMonitor instance to use as singleton.
+     */
+    static void SetInstance(CallGraphMonitor* instance) noexcept;
+
+    /**
+     * @brief Records the start of a function call and pushes it onto the call stack.
+     * @param functionName Name of the function being entered.
+     */
+    void StartFunction(const std::string& functionName);
+
+    /**
+     * @brief Records the end of the current function call and updates statistics.
+     */
+    void StopFunction();
+
+    /**
+     * @brief Clears all collected statistics and resets the monitor to initial state.
+     */
+    void Reset();
+
+    /**
+     * @brief Generates a formatted summary report of all collected call statistics.
+     * @return String containing performance statistics sorted by total execution time.
+     */
+    std::string SummaryText();
+
+   private:
+    static CallGraphMonitor* m_instance;
+
+    std::mutex m_mtx;
+    std::string GetCallStackAsString() const;  // last method on top
+
+    struct CallInfo
+    {
+        std::string functionName;
+        std::chrono::steady_clock::time_point startTime;
+        // std::chrono::steady_clock::time_point endTime;
+    };
+
+    std::vector<CallInfo> m_callStack;
+
+    struct CallStackStats
+    {
+        uint64_t callCount = 0;
+        uint64_t totalDuration = 0;
+    };
+
+    std::map<std::string, CallStackStats> m_callStackStats;
+
+    struct CallStackSummaryStats
+    {
+        std::string callStack;
+        uint64_t callCount = 0;
+        uint64_t totalDuration = 0;
+        uint64_t averageDuration = 0;
+    };
+};
+
+class CallGraphMonitorAgent : public NoCopy
+{
+   public:
+    /**
+     * @brief Constructor that automatically starts monitoring for the current function scope.
+     * @param file Source file name where the agent is created.
+     * @param func Function name being monitored.
+     */
+    CallGraphMonitorAgent(const char* file, const char* func);
+
+    /**
+     * @brief Destructor that automatically stops monitoring when leaving function scope.
+     */
+    ~CallGraphMonitorAgent();
+};
+
+#ifdef CALL_GRAPH_MONITOR_ENABLED
+/**
+ * @brief Initializes a CallGraphMonitor instance and sets it as the singleton.
+ *
+ * Creates a local CallGraphMonitor object and configures it as the global instance
+ * for call graph monitoring. Should be called once at application startup.
+ */
+#define CALL_GRAPH_MONITOR_INITIALIZE() \
+    CallGraphMonitor callGraphMonitor;  \
+    CallGraphMonitor::SetInstance(&callGraphMonitor);
+
+/**
+ * @brief Logs the current call graph statistics to the application log.
+ *
+ * Outputs a formatted summary of all collected performance statistics to the
+ * Information log level using the LOGSTR macro.
+ */
+#define CALL_GRAPH_MONITOR_LOG_STATS() LOGSTR(Information) << "CallGraphMonitor statistics:\n" << callGraphMonitor.SummaryText()
+
+/**
+ * @brief Creates a scope-based monitoring agent for the current function.
+ *
+ * Instantiates a CallGraphMonitorAgent that automatically tracks function entry/exit
+ * times for the current scope. The agent is destroyed when leaving the scope.
+ */
+#define CALL_GRAPH_MONITOR_AGENT() CallGraphMonitorAgent __callGraphAgent(__FILE__, __FUNCTION__);
+#else
+/**
+ * @brief Empty macros to be used when monitoring is disabled.
+ *
+ * When CALL_GRAPH_MONITOR_ENABLED is not defined, these macros expand to nothing,
+ * ensuring absolutely no processing overhead.
+ */
+#define CALL_GRAPH_MONITOR_INITIALIZE()
+#define CALL_GRAPH_MONITOR_LOG_STATS()
+#define CALL_GRAPH_MONITOR_AGENT()
+#endif
 
 #endif

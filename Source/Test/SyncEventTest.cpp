@@ -8,6 +8,8 @@
 
 #include <Logger/Logger.h>
 
+using namespace std;
+
 void SyncEventTest(bool autoReset)
 {
     SyncEvent event(false, autoReset);

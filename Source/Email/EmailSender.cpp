@@ -13,6 +13,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 EmailSender* EmailSender::m_instance = nullptr;
 
 EmailSender::EmailSender() noexcept : m_sslFlag(CURLUSESSL_ALL), m_timeout(120000) {}

@@ -15,31 +15,31 @@
 class LoggerEmailPlugin : public ILoggerPlugin, NoCopy
 {
    public:
-    static void ConfigureAll(JsonConfig& cfg, Logger& logger, const string& parentSection = "log.email");
+    static void ConfigureAll(JsonConfig& cfg, Logger& logger, const std::string& parentSection = "log.email");
 
-    LoggerEmailPlugin(JsonConfig& cfg, const string& section);
+    LoggerEmailPlugin(JsonConfig& cfg, const std::string& section);
     ~LoggerEmailPlugin();
 
-    virtual void Log(LogLevel level, const string& message);
+    virtual void Log(LogLevel level, const std::string& message);
     virtual LogLevel MinLogLevel();
     virtual void Flush(bool stillRunning, bool force);
 
    private:
     LogLevel m_minLogLevel;
-    vector<string> m_recipients;
-    string m_subject;
-    string m_emailSection;
+    std::vector<std::string> m_recipients;
+    std::string m_subject;
+    std::string m_emailSection;
     int m_maxDelay;
     int m_maxLogs;
     int m_timeoutOnShutdown;
 
     EmailSender m_emailSender;
-    unique_ptr<queue<string>> m_queue;
-    uint64_t m_queueTimestamp;
+    std::unique_ptr<std::queue<std::string>> m_queue;
+    std::uint64_t m_queueTimestamp;
 
-    mutex m_cs;  // TODO: a ga rabim? Uporabljam?
+    std::mutex m_cs;  // TODO: a ga rabim? Uporabljam?
 
-    void SendEmail(unique_ptr<queue<string>> emailQueue, bool stillRunning);
+    void SendEmail(std::unique_ptr<std::queue<std::string>> emailQueue, bool stillRunning);
 };
 
 #endif

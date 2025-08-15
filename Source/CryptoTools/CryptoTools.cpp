@@ -17,6 +17,7 @@
 #include <CryptoTools/CryptoTools.h>
 #include <Logger/Logger.h>
 
+using namespace std;
 using namespace Botan;
 
 CryptoTools* CryptoTools::m_instance = nullptr;

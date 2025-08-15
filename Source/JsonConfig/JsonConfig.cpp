@@ -15,6 +15,8 @@
 
 #include <JsonConfig/JsonConfig.h>
 
+using namespace std;
+
 JsonConfig* JsonConfig::m_instance = nullptr;
 
 JsonConfig::JsonConfig() noexcept = default;

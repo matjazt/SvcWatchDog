@@ -12,6 +12,8 @@
 #include <iostream>
 #include <chrono>
 
+using namespace std;
+
 void LoggerEmailPlugin::ConfigureAll(JsonConfig& cfg, Logger& logger, const string& parentSection)
 {
     // find all sections of parentSection and configure a LoggerEmailPlugin for each of them.

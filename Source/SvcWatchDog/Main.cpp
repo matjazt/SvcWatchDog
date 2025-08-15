@@ -16,6 +16,8 @@
 
 #pragma comment(lib, "ws2_32.lib")  // Link with Winsock library
 
+using namespace std;
+
 int main(int argc, char* argv[])
 {
     // NOTE: this seems to be far better option than _CrtDumpMemoryLeaks(), because it checks the memory leaks later in the
@@ -28,7 +30,7 @@ int main(int argc, char* argv[])
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
         {
-            cerr << "WSAStartup failed" << endl;
+            cerr << "WSAStartup failed\n";
             return -1;
         }
 

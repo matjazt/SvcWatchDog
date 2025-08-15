@@ -20,6 +20,8 @@
 #include <windows.h>
 #include <SimpleTools/SimpleTools.h>
 
+using namespace std;
+
 #define SVCWATCHDOG_MAX_ARGV 25
 
 #define SERVICE_CONTROL_USER 128

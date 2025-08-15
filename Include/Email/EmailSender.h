@@ -12,19 +12,19 @@ class EmailSender : public NoCopy
     static EmailSender* GetInstance() noexcept;
     static void SetInstance(EmailSender* instance) noexcept;
 
-    void Configure(JsonConfig& cfg, const string& section);
+    void Configure(JsonConfig& cfg, const std::string& section);
 
-    int SendSimpleEmail(const string& subject, const string& utf8body, const vector<string>& toAddresses, const string& sourceAddress = "",
-                        int timeout = 0);
+    int SendSimpleEmail(const std::string& subject, const std::string& utf8body, const std::vector<std::string>& toAddresses,
+                        const std::string& sourceAddress = "", int timeout = 0);
 
    private:
     static EmailSender* m_instance;
 
-    string m_smtpServerUrl;
+    std::string m_smtpServerUrl;
     int m_sslFlag;  // see CURLOPT_USE_SSL option in libcurl
-    string m_username;
-    string m_password;
-    string m_defaultSourceAddress;
+    std::string m_username;
+    std::string m_password;
+    std::string m_defaultSourceAddress;
     int m_timeout;  // in milliseconds
 };
 

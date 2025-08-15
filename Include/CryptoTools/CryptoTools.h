@@ -22,19 +22,19 @@ class CryptoTools : public NoCopy
     static CryptoTools* GetInstance() noexcept;
     static void SetInstance(CryptoTools* instance) noexcept;
 
-    void Configure(JsonConfig& cfg, const string& section, const string& defaultPassword);
+    void Configure(JsonConfig& cfg, const std::string& section, const std::string& defaultPassword);
 
-    string Aes256CbcEncrypt(const string& plainText);
-    string Aes256CbcDecrypt(const string& base64CipherText);
+    std::string Aes256CbcEncrypt(const std::string& plainText);
+    std::string Aes256CbcDecrypt(const std::string& base64CipherText);
 
-    string GetPossiblyEncryptedConfigurationString(JsonConfig& cfg, const string& section, const string& key,
-                                                   const string& defaultValue = "");
+    std::string GetPossiblyEncryptedConfigurationString(JsonConfig& cfg, const std::string& section, const std::string& key,
+                                                        const std::string& defaultValue = "");
 
     // void SelfTest();
 
    private:
-    unique_ptr<Botan::Cipher_Mode> m_encryptor;
-    unique_ptr<Botan::Cipher_Mode> m_decryptor;
+    std::unique_ptr<Botan::Cipher_Mode> m_encryptor;
+    std::unique_ptr<Botan::Cipher_Mode> m_decryptor;
 
     Botan::secure_vector<uint8_t> m_iv;
 

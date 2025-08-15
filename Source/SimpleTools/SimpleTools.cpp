@@ -16,6 +16,11 @@
 #include <SimpleTools/SimpleTools.h>
 #include <fstream>
 #include <filesystem>
+#include <cassert>
+#include <algorithm>
+#include <utility>
+
+using namespace std;
 
 string LoadTextFile(const filesystem::path& filePath)
 {
@@ -154,9 +159,15 @@ string JoinStrings(const vector<string>& words, const string& delimiter)
 string TrimEx(const string& str, const string& leftTrimChars, const string& rightTrimChars)
 {
     const size_t start = str.find_first_not_of(leftTrimChars);
-    if (start == string::npos) return "";  // All characters are trimmed
+    if (start == string::npos)
+    {
+        return "";  // All characters are trimmed
+    }
     const size_t end = str.find_last_not_of(rightTrimChars);
-    if (end == string::npos) return str.substr(start);  // No right trim
+    if (end == string::npos)
+    {
+        return str.substr(start);  // No right trim
+    }
     return str.substr(start, end - start + 1);
 }
 
@@ -166,8 +177,45 @@ string TrimLeft(const string& str, const string& trimChars) { return TrimEx(str,
 
 string TrimRight(const string& str, const string& trimChars) { return TrimEx(str, "", trimChars); }
 
-// SyncEvent class implementation
-//
+string GetLocationPrefix(const char* file, const char* func)
+{
+    assert(!NULLOREMPTY(file));
+    assert(!NULLOREMPTY(func));
+    if (strstr(func, "::"))
+    {
+        return func;
+    }
+
+    // the function name does not contain the class name, so we should log the file name to make it clear where the log came from
+    const char* g = file + strlen(file) - 1;
+    const char *f = g, *dot = g;
+    while (f > file && *f != filesystem::path::preferred_separator)
+    {
+        if (dot == g && *f == '.')
+        {
+            dot = f;
+        }
+        f--;
+    }
+    if (*f == filesystem::path::preferred_separator)
+    {
+        f++;
+    }
+
+    const string fileName(f, dot - f + 1);
+    if (dot == g)
+    {
+        // dot not found in file name (strange, but possible I guess)
+        return fileName + "." + func;
+    }
+    else
+    {
+        return fileName + func;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SyncEvent
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SyncEvent::SyncEvent(bool initialState, bool autoReset) : m_autoReset(autoReset), m_signaled(initialState) {}
@@ -220,3 +268,146 @@ bool SyncEvent::WaitForSingleEvent(int milliseconds)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Stopwatch
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Stopwatch::Stopwatch(std::string name) : m_name(std::move(name)), m_startWall(), m_endWall() { Start(); }
+
+void Stopwatch::Start()
+{
+    m_startWall = std::chrono::steady_clock::now();
+    m_startCpu = std::clock();
+    m_running = true;
+}
+
+void Stopwatch::Stop()
+{
+    m_endWall = std::chrono::steady_clock::now();
+    m_endCpu = std::clock();
+    m_running = false;
+}
+
+double Stopwatch::ElapsedWallMilliseconds() const
+{
+    auto end = m_running ? std::chrono::steady_clock::now() : m_endWall;
+    std::chrono::duration<double, std::milli> const duration = end - m_startWall;
+    return duration.count();
+}
+
+double Stopwatch::ElapsedCpuMilliseconds() const
+{
+    std::clock_t const end = m_running ? std::clock() : m_endCpu;
+    return double(end - m_startCpu) * 1000.0 / CLOCKS_PER_SEC;
+}
+
+std::string Stopwatch::SummaryText() const
+{
+    return (m_name.empty() ? "Stopwatch" : m_name) + ": duration " + std::to_string(int(ElapsedWallMilliseconds())) + " ms, CPU time " +
+           std::to_string(int(ElapsedCpuMilliseconds())) + " ms";
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CallGraphMonitor && CallGraphMonitorAgent
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CallGraphMonitor* CallGraphMonitor::m_instance = nullptr;
+
+CallGraphMonitor::CallGraphMonitor() noexcept = default;
+
+CallGraphMonitor* CallGraphMonitor::GetInstance() noexcept { return m_instance; }
+
+void CallGraphMonitor::SetInstance(CallGraphMonitor* instance) noexcept { m_instance = instance; }
+
+void CallGraphMonitor::StartFunction(const std::string& functionName)
+{
+    const lock_guard<mutex> lock(m_mtx);
+
+    m_callStack.push_back({functionName, std::chrono::steady_clock::now()});
+}
+
+void CallGraphMonitor::StopFunction()
+{
+    const lock_guard<mutex> lock(m_mtx);
+
+    auto now = std::chrono::steady_clock::now();
+    if (m_callStack.empty())
+    {
+        throw std::runtime_error("No function is currently being monitored.");
+    }
+
+    auto callStackString = GetCallStackAsString();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - m_callStack.back().startTime).count();
+    m_callStack.pop_back();
+
+    // now update statistics
+    auto& stats = m_callStackStats[callStackString];
+    stats.callCount++;
+    stats.totalDuration += duration;
+}
+
+void CallGraphMonitor::Reset()
+{
+    const lock_guard<mutex> lock(m_mtx);
+
+    m_callStack.clear();
+    m_callStackStats.clear();
+}
+
+std::string CallGraphMonitor::SummaryText()
+{
+    const lock_guard<mutex> lock(m_mtx);
+
+    // first copy the stats from the dictionary to an array, then sort it by time and finally compose the summary text
+    std::vector<CallStackSummaryStats> statsArray;
+    statsArray.reserve(m_callStackStats.size());
+    for (const auto& [callStack, stats] : m_callStackStats)
+    {
+        statsArray.push_back({callStack, stats.callCount, stats.totalDuration, stats.totalDuration / stats.callCount});
+    }
+
+    std::ranges::sort(statsArray,
+                      [](const CallStackSummaryStats& a, const CallStackSummaryStats& b) { return a.totalDuration > b.totalDuration; });
+
+    std::string summary;
+    const char* separator = "";
+    for (const auto& stats : statsArray)
+    {
+        summary += separator;
+        separator = "\n";
+        summary += std::to_string(stats.totalDuration) + " us : ";
+        summary += stats.callStack;
+        summary += " (" + std::to_string(stats.callCount) + " calls, ";
+        summary += std::to_string(stats.averageDuration) + " us average)";
+    }
+    return summary;
+}
+
+std::string CallGraphMonitor::GetCallStackAsString() const
+{
+    std::string callStack;
+    const char* separator = "";
+    for (const auto& frame : m_callStack)
+    {
+        callStack += separator + frame.functionName;
+        separator = " -> ";
+    }
+    return callStack;
+}
+
+CallGraphMonitorAgent::CallGraphMonitorAgent(const char* file, const char* func)
+{
+    auto instance = CallGraphMonitor::GetInstance();
+    if (instance)
+    {
+        instance->StartFunction(GetLocationPrefix(file, func));
+    }
+}
+
+CallGraphMonitorAgent::~CallGraphMonitorAgent()
+{
+    auto instance = CallGraphMonitor::GetInstance();
+    if (instance)
+    {
+        instance->StopFunction();
+    }
+}

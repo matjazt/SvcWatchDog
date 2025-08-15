@@ -17,6 +17,8 @@
 #include <ranges>
 #include <cassert>
 
+using namespace std;
+
 Logger* Logger::m_instance = nullptr;
 
 Logger::Logger() noexcept
@@ -107,7 +109,7 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     }
 
     // if file and function are provided, use them to get the location prefix
-    const string locationPrefix = (file && func) ? GetLocationPrefix(file, func) : "";
+    const string locationPrefix = (file && func) ? (GetLocationPrefix(file, func) + ": ") : "";
 
     struct tm localTime = {};
     int milliseconds = 0;
@@ -162,13 +164,13 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     const size_t maxSize = message.length() + locationPrefix.length() + 60;  // 60 - timestamp, log level, threadId etc
     string fullMessage;
     fullMessage.resize(maxSize);  // 50 - timestamp, log level etc
-    size_t actualLength = snprintf(&fullMessage[0], maxSize - 1, "%04d-%02d-%02d %02d:%02d:%02d.%03d [%s] %s%s%s\n",
-                                   localTime.tm_year + 1900, localTime.tm_mon + 1, localTime.tm_mday, localTime.tm_hour, localTime.tm_min,
-                                   localTime.tm_sec, milliseconds, levelName, threadIdPrefix, locationPrefix.c_str(), message.c_str());
+    int actualLength = snprintf(&fullMessage[0], maxSize - 1, "%04d-%02d-%02d %02d:%02d:%02d.%03d [%s] %s%s%s\n", localTime.tm_year + 1900,
+                                localTime.tm_mon + 1, localTime.tm_mday, localTime.tm_hour, localTime.tm_min, localTime.tm_sec,
+                                milliseconds, levelName, threadIdPrefix, locationPrefix.c_str(), message.c_str());
     if (actualLength < 0)
     {
         // snprintf failed, so the buffer is obviously too small. It shouldn't happen, but let's handle it anyway.
-        actualLength = maxSize - 1;
+        actualLength = (int)maxSize - 1;
         fullMessage[actualLength - 1] = '\n';
     }
     fullMessage.resize(actualLength);
@@ -355,43 +357,6 @@ void Logger::FlushFileQueue()
                 }
             }
         }
-    }
-}
-
-string Logger::GetLocationPrefix(const char* file, const char* func)
-{
-    assert(!NULLOREMPTY(file));
-    assert(!NULLOREMPTY(func));
-    if (strstr(func, "::"))
-    {
-        return string(func) + ": ";
-    }
-
-    // the function name does not contain the class name, so we should log the file name to make it clear where the log came from
-    const char* g = file + strlen(file) - 1;
-    const char *f = g, *dot = g;
-    while (f > file && *f != filesystem::path::preferred_separator)
-    {
-        if (dot == g && *f == '.')
-        {
-            dot = f;
-        }
-        f--;
-    }
-    if (*f == filesystem::path::preferred_separator)
-    {
-        f++;
-    }
-
-    const string fileName(f, dot - f + 1);
-    if (dot == g)
-    {
-        // dot not found in file name (strange, but possible I guess)
-        return fileName + "." + func + ": ";
-    }
-    else
-    {
-        return fileName + func + ": ";
     }
 }
 
