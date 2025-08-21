@@ -114,19 +114,6 @@ string GetHostname()
     return ok ? hostname : "unknown";
 }
 
-template <typename T>
-string NumberFormat(T num, const char* formatString)
-{
-    string retVal;
-    retVal.resize(100);
-    int l = snprintf(&retVal[0], retVal.size() - 1, formatString, num);
-    if (l > 0)
-    {
-        retVal.resize(l);
-    }
-    return retVal;
-}
-
 // helper function to split a string by delimiter
 vector<string> Split(const string& str, char delimiter)
 {
@@ -314,6 +301,39 @@ CallGraphMonitor* CallGraphMonitor::m_instance = nullptr;
 
 CallGraphMonitor::CallGraphMonitor() noexcept = default;
 
+void CallGraphMonitor::Calibrate()
+{
+    // measure the overhead, introduced by each measurement
+    auto calibrationStartTime = std::chrono::steady_clock::now();
+
+    bool calibrationDone = false;
+    while (!calibrationDone)
+    {
+        CALL_GRAPH_MONITOR_AGENT();
+
+        auto now = std::chrono::steady_clock::now();
+        calibrationDone = std::chrono::duration_cast<std::chrono::milliseconds>(now - calibrationStartTime).count() >= 500;
+    }
+
+    double overheadMeasurementTime =
+        double(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - calibrationStartTime).count());
+
+    m_overheadPerCall = overheadMeasurementTime / m_totalCallCount;
+
+    // We need to somewhat adjust the measurement to account for the more populated m_callStackStats, expected in real scenarios.
+    // There is no way to predict the exact behaviour in advance, so we use a calibration factor.
+#ifdef CALL_GRAPH_MONITOR_CALIBRATION_FACTOR
+    m_overheadPerCall *= CALL_GRAPH_MONITOR_CALIBRATION_FACTOR;
+#elif WIN32
+    m_overheadPerCall *= 2.5;
+#else
+    m_overheadPerCall *= 2.1;
+#endif
+
+    // clear the stats, we only needed them for calibration
+    m_callStackStats.clear();
+}
+
 CallGraphMonitor* CallGraphMonitor::GetInstance() noexcept { return m_instance; }
 
 void CallGraphMonitor::SetInstance(CallGraphMonitor* instance) noexcept { m_instance = instance; }
@@ -322,7 +342,8 @@ void CallGraphMonitor::StartFunction(const std::string& functionName)
 {
     const lock_guard<mutex> lock(m_mtx);
 
-    m_callStack.push_back({functionName, std::chrono::steady_clock::now()});
+    m_callStack.push_back({functionName, std::chrono::steady_clock::now(), m_totalCallCount});
+    m_totalCallCount++;
 }
 
 void CallGraphMonitor::StopFunction()
@@ -336,7 +357,18 @@ void CallGraphMonitor::StopFunction()
     }
 
     auto callStackString = GetCallStackAsString();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(now - m_callStack.back().startTime).count();
+    auto& callInfo = m_callStack.back();
+    uint64_t overhead = (uint64_t)((m_totalCallCount - callInfo.totalCallCount) * m_overheadPerCall);
+    uint64_t duration = std::chrono::duration_cast<std::chrono::microseconds>(now - callInfo.startTime).count();
+    // Ensure duration is not negative; it might be due to non-exact timings
+    if (duration > overhead)
+    {
+        duration -= overhead;
+    }
+    else
+    {
+        duration = 0;
+    }
     m_callStack.pop_back();
 
     // now update statistics

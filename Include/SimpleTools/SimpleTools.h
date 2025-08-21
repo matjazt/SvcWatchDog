@@ -97,8 +97,25 @@ class NoCopy
 };
 
 template <typename T>
-std::string NumberFormat(T num, const char* formatString);
+std::string NumberFormat(T num, const char* formatString)
+{
+    std::string retVal;
+    retVal.resize(100);
+    int l = snprintf(&retVal[0], retVal.size() - 1, formatString, num);
+    if (l > 0)
+    {
+        retVal.resize(l);
+    }
+    return retVal;
+}
 #define FLOAT2(f) NumberFormat((f), "%3.2lf")
+#define FLOAT3(f) NumberFormat((f), "%3.3lf")
+#define FLOAT4(f) NumberFormat((f), "%3.4lf")
+#define FLOAT5(f) NumberFormat((f), "%3.5lf")
+#define FLOAT6(f) NumberFormat((f), "%3.6lf")
+#define FLOAT7(f) NumberFormat((f), "%3.7lf")
+#define FLOAT8(f) NumberFormat((f), "%3.8lf")
+#define FLOAT9(f) NumberFormat((f), "%3.9lf")
 #define FLOATFULL(f) NumberFormat((f), "%3.17lf")
 #define BOOL2STR(b) ((b) ? "true" : "false")
 
@@ -149,6 +166,7 @@ std::string GetLocationPrefix(const char* file, const char* func);
 #define MAX_PATH 256
 
 #define _chdir(d) chdir(d)
+#define _getcwd(buf, size) getcwd(buf, size)
 #define _vsnprintf vsnprintf
 
 #define _ftime ftime
@@ -316,18 +334,18 @@ class Stopwatch : public NoCopy
  * - Integrates with CallGraphMonitorAgent for automatic scope-based monitoring
  *
  * Usage:
- *   1. Set a singleton instance using SetInstance() or use the CALL_GRAPH_MONITOR_INITIALIZE macro
+ *   1. use the CALL_GRAPH_MONITOR_INITIALIZE macro to initialize and calibrate the singleton
  *   2. Use CALL_GRAPH_MONITOR_AGENT macro at the beginning of functions to automatically track calls
  *   3. Call SummaryText() to get performance statistics or use the CALL_GRAPH_MONITOR_LOG_STATS macro
- *
- * TODO:
- *   - on startup, measure the overhead of the monitoring system itself and later substract it from the
- *     measured timings
- *   - detect methods which are to fast to be measured accurately and report them as such
  *
  * @note The associated macros are controlled by the CALL_GRAPH_MONITOR_ENABLED preprocessor definition.
  *       When this symbol is not defined (which is the default), the macros expand to empty statements,
  *       ensuring zero runtime overhead.
+ *
+ * @note Although CallGraphMonitor measures its own overhead and compensates for it in the reported timings,
+ *       there may still be cases where extremely fast functions are not measured accurately. Besides that,
+ *       compiling your project with CallGraphMonitor enabled can alter the optimizations the compiler can do
+ *       and may lead to different inlining decisions or other performance-related changes.
  */
 class CallGraphMonitor : public NoCopy
 {
@@ -348,6 +366,11 @@ class CallGraphMonitor : public NoCopy
      * @param instance Pointer to the CallGraphMonitor instance to use as singleton.
      */
     static void SetInstance(CallGraphMonitor* instance) noexcept;
+
+    /**
+     * @brief Calibrates the monitoring system by measuring overhead and adjusting timings.
+     */
+    void Calibrate();
 
     /**
      * @brief Records the start of a function call and pushes it onto the call stack.
@@ -374,13 +397,17 @@ class CallGraphMonitor : public NoCopy
    private:
     static CallGraphMonitor* m_instance;
 
-    std::mutex m_mtx;
     std::string GetCallStackAsString() const;  // last method on top
+
+    std::mutex m_mtx;
+    uint64_t m_totalCallCount = 0;
+    double m_overheadPerCall = 0;
 
     struct CallInfo
     {
         std::string functionName;
         std::chrono::steady_clock::time_point startTime;
+        uint64_t totalCallCount;
         // std::chrono::steady_clock::time_point endTime;
     };
 
@@ -426,9 +453,10 @@ class CallGraphMonitorAgent : public NoCopy
  * Creates a local CallGraphMonitor object and configures it as the global instance
  * for call graph monitoring. Should be called once at application startup.
  */
-#define CALL_GRAPH_MONITOR_INITIALIZE() \
-    CallGraphMonitor callGraphMonitor;  \
-    CallGraphMonitor::SetInstance(&callGraphMonitor);
+#define CALL_GRAPH_MONITOR_INITIALIZE()               \
+    CallGraphMonitor callGraphMonitor;                \
+    CallGraphMonitor::SetInstance(&callGraphMonitor); \
+    callGraphMonitor.Calibrate();
 
 /**
  * @brief Logs the current call graph statistics to the application log.
