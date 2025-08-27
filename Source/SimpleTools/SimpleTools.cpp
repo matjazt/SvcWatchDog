@@ -164,16 +164,8 @@ string TrimLeft(const string& str, const string& trimChars) { return TrimEx(str,
 
 string TrimRight(const string& str, const string& trimChars) { return TrimEx(str, "", trimChars); }
 
-string GetLocationPrefix(const char* file, const char* func)
+string GetFileStem(const char* file)
 {
-    assert(!NULLOREMPTY(file));
-    assert(!NULLOREMPTY(func));
-    if (strstr(func, "::"))
-    {
-        return func;
-    }
-
-    // the function name does not contain the class name, so we should log the file name to make it clear where the log came from
     const char* g = file + strlen(file) - 1;
     const char *f = g, *dot = g;
     while (f > file && *f != filesystem::path::preferred_separator)
@@ -189,16 +181,38 @@ string GetLocationPrefix(const char* file, const char* func)
         f++;
     }
 
-    const string fileName(f, dot - f + 1);
-    if (dot == g)
+    return string(f, dot - f + (dot == g ? 1 : 0));
+}
+
+string GetLocationPrefix(const char* file, const char* funcSignature)
+{
+    assert(!NULLOREMPTY(file));
+    assert(!NULLOREMPTY(funcSignature));
+
+    // find ( or end of string
+    const char *g = funcSignature, *p = funcSignature, *colon = nullptr;
+    while (*g && *g != '(')
     {
-        // dot not found in file name (strange, but possible I guess)
-        return fileName + "." + func;
+        if (*g == ' ')
+        {
+            p = g + 1;  // remember the position after the last space
+        }
+        if (*g == ':')
+        {
+            colon = g;
+        }
+        g++;
     }
-    else
+
+    string functionName(p, g - p);
+    if (colon > p)
     {
-        return fileName + func;
+        // we have something like ClassName::MethodName, so just return it
+        return functionName;
     }
+
+    // the function name does not contain the class name, so we should log the file name to make it clear where the log came from
+    return GetFileStem(file) + "." + functionName;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////

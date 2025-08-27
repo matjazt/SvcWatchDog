@@ -125,7 +125,8 @@ std::string TrimEx(const std::string& str, const std::string& leftTrimChars, con
 std::string Trim(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
 std::string TrimLeft(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
 std::string TrimRight(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
-std::string GetLocationPrefix(const char* file, const char* func);
+std::string GetFileStem(const char* file);
+std::string GetLocationPrefix(const char* file, const char* funcSignature);
 
 #ifdef WIN32
 
@@ -141,6 +142,8 @@ std::string GetLocationPrefix(const char* file, const char* func);
 
 #define O_SYNC 0
 #define strcasecmp stricmp
+
+#define FUNC_SIGNATURE __FUNCSIG__
 
 #endif
 
@@ -171,6 +174,8 @@ std::string GetLocationPrefix(const char* file, const char* func);
 
 #define _ftime ftime
 #define _timeb struct timeb
+
+#define FUNC_SIGNATURE __PRETTY_FUNCTION__
 
 #endif
 
@@ -472,7 +477,7 @@ class CallGraphMonitorAgent : public NoCopy
  * Instantiates a CallGraphMonitorAgent that automatically tracks function entry/exit
  * times for the current scope. The agent is destroyed when leaving the scope.
  */
-#define CALL_GRAPH_MONITOR_AGENT() CallGraphMonitorAgent __callGraphAgent(__FILE__, __FUNCTION__);
+#define CALL_GRAPH_MONITOR_AGENT() CallGraphMonitorAgent __callGraphAgent(__FILE__, FUNC_SIGNATURE);
 #else
 /**
  * @brief Empty macros to be used when monitoring is disabled.

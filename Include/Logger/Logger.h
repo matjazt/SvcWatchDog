@@ -101,17 +101,17 @@ class Logger : public NoCopy
 };
 
 #define Lg (*Logger::GetInstance())
-#define LOGSTR(...) LoggerStream().GetEx(__FILE__, __FUNCTION__ __VA_OPT__(, __VA_ARGS__))  // optional log level;
+#define LOGSTR(...) LoggerStream().GetEx(__FILE__, FUNC_SIGNATURE __VA_OPT__(, __VA_ARGS__))  // optional log level;
 // note that __VA_OPT__ was introduced in C++20, so this macro will only work with C++20 or later. For earlier versions, you can
 // use compiler-specific hacks (like ##__VA_ARGS__ in GCC/Clang/MSVC)
-#define LOGMSG(LEVEL, MSG) Logger::GetInstance()->Log((LEVEL), (MSG), __FILE__, __FUNCTION__);
-#define LOGASSERT(CONDITION)                                                                                                    \
-    do                                                                                                                          \
-    {                                                                                                                           \
-        if (!(CONDITION))                                                                                                       \
-        {                                                                                                                       \
-            Logger::GetInstance()->Log(Fatal, "assertion failure at line " + std::to_string(__LINE__), __FILE__, __FUNCTION__); \
-        }                                                                                                                       \
+#define LOGMSG(LEVEL, MSG) Logger::GetInstance()->Log((LEVEL), (MSG), __FILE__, FUNC_SIGNATURE);
+#define LOGASSERT(CONDITION)                                                                                                      \
+    do                                                                                                                            \
+    {                                                                                                                             \
+        if (!(CONDITION))                                                                                                         \
+        {                                                                                                                         \
+            Logger::GetInstance()->Log(Fatal, "assertion failure at line " + std::to_string(__LINE__), __FILE__, FUNC_SIGNATURE); \
+        }                                                                                                                         \
     } while (0)
 
 // logging macros which causes the logs to only *compile* in debug mode, so they have no impact whatsoever in release mode
