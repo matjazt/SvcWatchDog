@@ -91,7 +91,7 @@ int JsonConfig::GetString(const string& path, const string& key, char* buffer, s
     string v = GetParameter(path, key, defaultValue);
     strncpy(buffer, &v[0], bufferSize - 1);
     buffer[bufferSize - 1] = 0;
-    return (int)strlen(buffer);
+    return TOINT(strlen(buffer));
 }
 
 template <typename T>

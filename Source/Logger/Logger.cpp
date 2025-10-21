@@ -36,16 +36,25 @@ Logger::Logger() noexcept
 {
 }
 
-Logger::~Logger() { Shutdown(); }
+Logger::~Logger()
+{
+    Shutdown();
+    if (m_instance == this)
+    {
+        m_instance = nullptr;
+    }
+}
 
 Logger* Logger::GetInstance() noexcept { return m_instance; }
 
 void Logger::SetInstance(Logger* instance) noexcept { m_instance = instance; }
 
+void Logger::SetFileNamePostfix(const string& postfix) noexcept { m_fileNamePostfix = postfix; }
+
 void Logger::Configure(JsonConfig& cfg, const string& section)
 {
-    m_minConsoleLevel = (LogLevel)cfg.GetNumber(section, "minConsoleLevel", (int)LogLevel::Verbose);
-    m_minFileLevel = (LogLevel)cfg.GetNumber(section, "minFileLevel", (int)LogLevel::Verbose);
+    m_minConsoleLevel = (LogLevel)cfg.GetNumber(section, "minConsoleLevel", TOINT(LogLevel::Verbose));
+    m_minFileLevel = (LogLevel)cfg.GetNumber(section, "minFileLevel", TOINT(LogLevel::Verbose));
     const string tmp = cfg.GetString(section, "filePath", "");
     if (tmp.empty())
     {
@@ -55,7 +64,15 @@ void Logger::Configure(JsonConfig& cfg, const string& section)
     else
     {
         // if the file path is provided, make sure it is absolute
+
         m_filePath = filesystem::absolute(tmp);
+        if (!m_fileNamePostfix.empty())
+        {
+            // insert the postfix before the extension
+            auto baseName = m_filePath.stem();
+            auto extension = m_filePath.extension();
+            m_filePath = m_filePath.parent_path() / (baseName.string() + "." + m_fileNamePostfix + extension.string());
+        }
         filesystem::create_directories(m_filePath.parent_path());  // create the directory if it doesn't exist
     }
     m_maxFileSize = cfg.GetNumber(section, "maxFileSize", 20 * 1024 * 1024);
@@ -170,7 +187,7 @@ void Logger::Log(LogLevel level, const string& message, const char* file, const 
     if (actualLength < 0)
     {
         // snprintf failed, so the buffer is obviously too small. It shouldn't happen, but let's handle it anyway.
-        actualLength = (int)maxSize - 1;
+        actualLength = TOINT(maxSize) - 1;
         fullMessage[actualLength - 1] = '\n';
     }
     fullMessage.resize(actualLength);
@@ -375,6 +392,8 @@ std::ostringstream& LoggerStream::GetEx(const char* file, const char* func, LogL
     m_level = level;
     return m_buffer;
 }
+
+std::string LoggerStream::GetBuffer() const { return m_buffer.str(); }
 
 LoggerStream::~LoggerStream()
 {

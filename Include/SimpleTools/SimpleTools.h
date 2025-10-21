@@ -76,6 +76,20 @@
 #define EMPTYIFNULL(s) ((s) ? (s) : "")
 #define NULLOREMPTY(s) ((s) == nullptr || *(s) == 0)
 
+#define TOINT32(s) static_cast<int32_t>(s)
+#define TOUINT32(s) static_cast<uint32_t>(s)
+#define TOUINT64(s) static_cast<uint64_t>(s)
+#define TOINT64(s) static_cast<int64_t>(s)
+#define TOUINT(s) static_cast<unsigned int>(s)
+#define TOINT(s) static_cast<int>(s)
+#define TOSIZE(s) static_cast<size_t>(s)
+#define TOFLOAT(s) static_cast<float>(s)
+#define TODOUBLE(s) static_cast<double>(s)
+#define TOLONG(s) static_cast<long>(s)
+#define TOLONGLONG(s) static_cast<long long>(s)
+#define TOCHAR(s) static_cast<char>(s)
+#define TOUCHAR(s) static_cast<unsigned char>(s)
+
 std::string LoadTextFile(const std::filesystem::path& filePath);
 
 void GetCurrentLocalTime(struct tm& localTime, int& milliseconds) noexcept;
@@ -85,6 +99,7 @@ uint64_t SteadyTime() noexcept;
 
 std::filesystem::path GetExecutableFullPath();
 std::string GetExecutableName();
+std::pair<std::filesystem::path, std::filesystem::path> GetBaseFolderAndDefaultConfigurationPath();
 std::string GetHostname();
 
 class NoCopy
@@ -121,6 +136,62 @@ std::string NumberFormat(T num, const char* formatString)
 
 std::vector<std::string> Split(const std::string& str, char delimiter);
 std::string JoinStrings(const std::vector<std::string>& words, const std::string& delimiter);
+
+template <typename T>
+std::string AnythingToString(const T& value)
+{
+    if constexpr (std::is_same_v<T, bool>)
+    {
+        return value ? "true" : "false";
+    }
+    else if constexpr (std::is_arithmetic_v<T>)
+    {
+        return std::to_string(value);
+    }
+    else
+    {
+        // For other types, attempt to use stream operator
+        std::ostringstream oss;
+        oss << value;
+        return oss.str();
+    }
+}
+
+// TODO: speglaj naslednji dve metodi kolikor se da, ne da bi otežil uporabo!
+// Druga metoda lahko sprejme dva vektorja različnih tipov
+template <typename T>
+std::vector<std::string> ConvertToStringVector(const T* values, size_t len)
+{
+    std::vector<std::string> result;
+    result.reserve(len);
+
+    for (size_t i = 0; i < len; ++i)
+    {
+        result.push_back(AnythingToString(values[i]));
+    }
+
+    return result;
+}
+
+template <typename T>
+std::vector<std::string> PairNamesAndValues(const std::vector<std::string>& names, const T* values, size_t len)
+{
+    std::vector<std::string> result;
+    if (names.size() != len)
+    {
+        throw std::runtime_error("PairNamesAndValues: names size does not match values size");
+    }
+
+    result.reserve(len);
+
+    for (size_t i = 0; i < len; ++i)
+    {
+        result.push_back(names[i] + "=" + AnythingToString(values[i]));
+    }
+
+    return result;
+}
+
 std::string TrimEx(const std::string& str, const std::string& leftTrimChars, const std::string& rightTrimChars);
 std::string Trim(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
 std::string TrimLeft(const std::string& str, const std::string& trimChars = " \t\n\r\f\v");
@@ -159,7 +230,6 @@ std::string GetLocationPrefix(const char* file, const char* funcSignature);
 #define _stat stat
 
 #define __stdcall
-#define Sleep(ms) usleep((unsigned long)(ms) * 1000ul)
 
 #define O_BINARY 0
 
@@ -381,12 +451,12 @@ class CallGraphMonitor : public NoCopy
      * @brief Records the start of a function call and pushes it onto the call stack.
      * @param functionName Name of the function being entered.
      */
-    void StartFunction(const std::string& functionName);
+    void StartFunction(const std::string& functionName) noexcept;
 
     /**
      * @brief Records the end of the current function call and updates statistics.
      */
-    void StopFunction();
+    void StopFunction() noexcept;
 
     /**
      * @brief Clears all collected statistics and resets the monitor to initial state.

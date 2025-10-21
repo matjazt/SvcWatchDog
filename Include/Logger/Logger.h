@@ -57,6 +57,7 @@ class Logger : public NoCopy
     static Logger* GetInstance() noexcept;
     static void SetInstance(Logger* instance) noexcept;
 
+    void SetFileNamePostfix(const std::string& postfix) noexcept;
     void Configure(JsonConfig& cfg, const std::string& section = "log");
     void RegisterPlugin(std::unique_ptr<ILoggerPlugin> plugin);
     LogLevel GetMinPluginLevel();
@@ -67,12 +68,17 @@ class Logger : public NoCopy
     void Log(LogLevel level, const std::string& message, const char* file = nullptr, const char* func = nullptr);
     void Msg(LogLevel level, const char* pszFmt, ...);
 
+    void Flush(
+        bool force);  // flush both file queue and plugins - but avoid doing it manually, since the logger thread does it automatically
+
    private:
     static Logger* m_instance;
 
     LogLevel m_minConsoleLevel;
     LogLevel m_minFileLevel;
     std::filesystem::path m_filePath;
+    std::string
+        m_fileNamePostfix;  // used when we run multiple instances of the same app on the same machine, for example several MPI processes
     int m_maxFileSize;
     int m_maxWriteDelay;
     size_t m_maxOldFiles;
@@ -96,7 +102,6 @@ class Logger : public NoCopy
     std::mutex m_cs;
 
     void Thread();
-    void Flush(bool force);
     void FlushFileQueue();
 };
 
@@ -111,6 +116,7 @@ class Logger : public NoCopy
         if (!(CONDITION))                                                                                                         \
         {                                                                                                                         \
             Logger::GetInstance()->Log(Fatal, "assertion failure at line " + std::to_string(__LINE__), __FILE__, FUNC_SIGNATURE); \
+            Logger::GetInstance()->Flush(false);                                                                                  \
         }                                                                                                                         \
     } while (0)
 
@@ -134,6 +140,9 @@ class LoggerStream : public NoCopy
     virtual ~LoggerStream();
     std::ostringstream& Get(LogLevel level = Debug) noexcept;
     std::ostringstream& GetEx(const char* file, const char* func, LogLevel level = Debug) noexcept;
+
+    // testing & debugging methods
+    std::string GetBuffer() const;
 
    protected:
     std::ostringstream m_buffer;

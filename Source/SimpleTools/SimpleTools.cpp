@@ -65,7 +65,7 @@ void GetCurrentLocalTime(struct tm& localTime, int& milliseconds) noexcept
 
     // localTime = std::localtime(&now_time);
     // Extract milliseconds from the current time_point
-    milliseconds = (int)(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000).count();
+    milliseconds = TOINT((std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000).count());
 }
 
 uint64_t SteadyTime() noexcept
@@ -101,6 +101,25 @@ string GetExecutableName()
     return fullPath.stem().string();
 }
 
+pair<filesystem::path, filesystem::path> GetBaseFolderAndDefaultConfigurationPath()
+{
+    auto exePath = GetExecutableFullPath();
+    auto exeFolder = exePath.parent_path();
+    auto baseFolder = exeFolder.parent_path();
+    auto binFolderStem = exeFolder.stem().string();
+
+    std::ranges::transform(binFolderStem, binFolderStem.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+
+    if (binFolderStem == "debug" || binFolderStem == "release")
+    {
+        // if we are in the debug or release folder, go one level up to the base folder
+        baseFolder = baseFolder.parent_path();
+    }
+
+    auto cfgPath = baseFolder / "etc" / (exePath.stem().string() + ".json");
+    return {baseFolder, cfgPath};
+}
+
 string GetHostname()
 {
     char hostname[256] = "";
@@ -108,7 +127,6 @@ string GetHostname()
     DWORD size = sizeof(hostname);
     const bool ok = GetComputerNameA(hostname, &size);
 #else
-    // TODO: not tested on linux
     const bool ok = gethostname(hostname, sizeof(hostname)) == 0;
 #endif
     return ok ? hostname : "unknown";
@@ -131,15 +149,24 @@ vector<string> Split(const string& str, char delimiter)
 
 string JoinStrings(const vector<string>& words, const string& delimiter)
 {
-    string result;
+    size_t totalLength = 0;
     for (const string& word : words)
     {
-        if (!result.empty())
+        totalLength += word.length();
+    }
+    totalLength += delimiter.length() * (words.size() - 1);
+    string result;
+    result.reserve(totalLength);
+
+    for (const string& word : words)
+    {
+        if (!result.empty() && !delimiter.empty())
         {
             result += delimiter;  // Add delimiter before the next word
         }
         result += word;
     }
+
     return result;
 }
 
@@ -329,10 +356,10 @@ void CallGraphMonitor::Calibrate()
         calibrationDone = std::chrono::duration_cast<std::chrono::milliseconds>(now - calibrationStartTime).count() >= 500;
     }
 
-    double overheadMeasurementTime =
+    const double overheadMeasurementTime =
         double(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - calibrationStartTime).count());
 
-    m_overheadPerCall = overheadMeasurementTime / m_totalCallCount;
+    m_overheadPerCall = overheadMeasurementTime / double(m_totalCallCount);
 
     // We need to somewhat adjust the measurement to account for the more populated m_callStackStats, expected in real scenarios.
     // There is no way to predict the exact behaviour in advance, so we use a calibration factor.
@@ -352,7 +379,7 @@ CallGraphMonitor* CallGraphMonitor::GetInstance() noexcept { return m_instance; 
 
 void CallGraphMonitor::SetInstance(CallGraphMonitor* instance) noexcept { m_instance = instance; }
 
-void CallGraphMonitor::StartFunction(const std::string& functionName)
+void CallGraphMonitor::StartFunction(const std::string& functionName) noexcept
 {
     const lock_guard<mutex> lock(m_mtx);
 
@@ -360,19 +387,20 @@ void CallGraphMonitor::StartFunction(const std::string& functionName)
     m_totalCallCount++;
 }
 
-void CallGraphMonitor::StopFunction()
+void CallGraphMonitor::StopFunction() noexcept
 {
     const lock_guard<mutex> lock(m_mtx);
 
-    auto now = std::chrono::steady_clock::now();
     if (m_callStack.empty())
     {
-        throw std::runtime_error("No function is currently being monitored.");
+        return;
     }
+
+    auto now = std::chrono::steady_clock::now();
 
     auto callStackString = GetCallStackAsString();
     auto& callInfo = m_callStack.back();
-    uint64_t overhead = (uint64_t)((m_totalCallCount - callInfo.totalCallCount) * m_overheadPerCall);
+    const auto overhead = TOUINT64(TODOUBLE(m_totalCallCount - callInfo.totalCallCount) * m_overheadPerCall);
     uint64_t duration = std::chrono::duration_cast<std::chrono::microseconds>(now - callInfo.startTime).count();
     // Ensure duration is not negative; it might be due to non-exact timings
     if (duration > overhead)
