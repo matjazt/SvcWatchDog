@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <span>
 #include <map>
 #include <filesystem>
 #include <mutex>
@@ -90,6 +91,10 @@
 #define TOCHAR(s) static_cast<char>(s)
 #define TOUCHAR(s) static_cast<unsigned char>(s)
 
+#define DELETE_COPY_AND_ASSIGNMENT(ClassName) \
+    ClassName(const ClassName&) = delete;     \
+    ClassName& operator=(const ClassName&) = delete;
+
 std::string LoadTextFile(const std::filesystem::path& filePath);
 
 void GetCurrentLocalTime(struct tm& localTime, int& milliseconds) noexcept;
@@ -157,34 +162,42 @@ std::string AnythingToString(const T& value)
     }
 }
 
-// TODO: speglaj naslednji dve metodi kolikor se da, ne da bi otežil uporabo!
-// Druga metoda lahko sprejme dva vektorja različnih tipov
+/** @brief Converts a span of values to a vector of strings.
+ * @param values Span of values to convert.
+ * @return Vector of string representations of the values.
+ */
 template <typename T>
-std::vector<std::string> ConvertToStringVector(const T* values, size_t len)
+std::vector<std::string> ConvertToStringVector(const std::span<const T>& values)
 {
     std::vector<std::string> result;
-    result.reserve(len);
+    result.reserve(values.size());
 
-    for (size_t i = 0; i < len; ++i)
+    for (const auto& val : values)
     {
-        result.push_back(AnythingToString(values[i]));
+        result.push_back(AnythingToString(val));
     }
 
     return result;
 }
 
+/** @brief Pairs names with their corresponding values.
+ * @param names Span of names.
+ * @param values Span of values.
+ * @return Vector of strings in the format "name=value".
+ * @throws std::runtime_error if the sizes of names and values do not match.
+ */
 template <typename T>
-std::vector<std::string> PairNamesAndValues(const std::vector<std::string>& names, const T* values, size_t len)
+std::vector<std::string> PairNamesAndValues(const std::span<const std::string>& names, const std::span<const T>& values)
 {
     std::vector<std::string> result;
-    if (names.size() != len)
+    if (names.size() != values.size())
     {
         throw std::runtime_error("PairNamesAndValues: names size does not match values size");
     }
 
-    result.reserve(len);
+    result.reserve(names.size());
 
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < names.size(); ++i)
     {
         result.push_back(names[i] + "=" + AnythingToString(values[i]));
     }

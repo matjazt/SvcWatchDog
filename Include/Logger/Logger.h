@@ -121,13 +121,13 @@ class Logger : public NoCopy
     } while (0)
 
 // logging macros which causes the logs to only *compile* in debug mode, so they have no impact whatsoever in release mode
-#if defined(_DEBUG) || defined(FORCE_LOG_DEBUG)
+#if (defined(_DEBUG) || defined(FORCE_LOG_DEBUG)) && !defined(PREVENT_LOG_DEBUG)
 #define LOG_DEBUG(a) LOGSTR(Debug) << a;
 #else
 #define LOG_DEBUG(a) ;
 #endif
 
-#if defined(_DEBUG) || defined(FORCE_LOG_VERBOSE)
+#if (defined(_DEBUG) || defined(FORCE_LOG_VERBOSE)) && !defined(PREVENT_LOG_VERBOSE)
 #define LOG_VERBOSE(a) LOGSTR(Verbose) << a;
 #else
 #define LOG_VERBOSE(a) ;

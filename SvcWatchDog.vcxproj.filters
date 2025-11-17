@@ -70,6 +70,9 @@
     <ClInclude Include="Include\Logger\LoggerEmailPlugin.h">
       <Filter>Tools</Filter>
     </ClInclude>
+    <ClInclude Include="Include\SimpleTools\GenericRegistry.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Scripts\TestService.ps1">

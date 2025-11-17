@@ -261,6 +261,7 @@
     <ClInclude Include="Include\EMail\EmailSender.h" />
     <ClInclude Include="Include\JsonConfig\JsonConfig.h" />
     <ClInclude Include="Include\Logger\LoggerEmailPlugin.h" />
+    <ClInclude Include="Include\SimpleTools\GenericRegistry.h" />
     <ClInclude Include="Include\SimpleTools\SimpleTools.h" />
     <ClInclude Include="Include\SvcWatchDog\resource.h" />
     <ClInclude Include="Include\SvcWatchDog\SvcWatchDog.h" />

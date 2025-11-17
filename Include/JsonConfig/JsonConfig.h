@@ -48,6 +48,26 @@ class JsonConfig : public NoCopy
     std::vector<std::string> GetStringVector(const std::string& path, const std::string& key, std::vector<std::string> defaultValue = {});
     std::vector<std::string> GetKeys(const std::string& path, bool includeObjects, bool includeArrays, bool includeOthers);
 
+    template <typename T>
+    T ParseSection(const std::string& section)
+    {
+        // configure the plugin
+        json* sectionData = GetJson(section);
+        if (!sectionData)
+        {
+            throw std::runtime_error("configuration section '" + section + "' not found");
+        }
+
+        try
+        {
+            return sectionData->template get<T>();
+        }
+        catch (const std::exception& e)
+        {
+            throw std::runtime_error("Failed to parse configuration section '" + section + "': " + e.what());
+        }
+    }
+
    private:
     static JsonConfig* m_instance;
 
