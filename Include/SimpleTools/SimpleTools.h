@@ -77,19 +77,19 @@
 #define EMPTYIFNULL(s) ((s) ? (s) : "")
 #define NULLOREMPTY(s) ((s) == nullptr || *(s) == 0)
 
-#define TOINT32(s) static_cast<int32_t>(s)
-#define TOUINT32(s) static_cast<uint32_t>(s)
-#define TOUINT64(s) static_cast<uint64_t>(s)
-#define TOINT64(s) static_cast<int64_t>(s)
-#define TOUINT(s) static_cast<unsigned int>(s)
-#define TOINT(s) static_cast<int>(s)
-#define TOSIZE(s) static_cast<size_t>(s)
-#define TOFLOAT(s) static_cast<float>(s)
-#define TODOUBLE(s) static_cast<double>(s)
-#define TOLONG(s) static_cast<long>(s)
-#define TOLONGLONG(s) static_cast<long long>(s)
-#define TOCHAR(s) static_cast<char>(s)
-#define TOUCHAR(s) static_cast<unsigned char>(s)
+#define TOINT32(s) (static_cast<int32_t>(s))
+#define TOUINT32(s) (static_cast<uint32_t>(s))
+#define TOUINT64(s) (static_cast<uint64_t>(s))
+#define TOINT64(s) (static_cast<int64_t>(s))
+#define TOUINT(s) (static_cast<unsigned int>(s))
+#define TOINT(s) (static_cast<int>(s))
+#define TOSIZE(s) (static_cast<size_t>(s))
+#define TOFLOAT(s) (static_cast<float>(s))
+#define TODOUBLE(s) (static_cast<double>(s))
+#define TOLONG(s) (static_cast<long>(s))
+#define TOLONGLONG(s) (static_cast<long long>(s))
+#define TOCHAR(s) (static_cast<char>(s))
+#define TOUCHAR(s) (static_cast<unsigned char>(s))
 
 #define DELETE_COPY_AND_ASSIGNMENT(ClassName) \
     ClassName(const ClassName&) = delete;     \
@@ -106,15 +106,6 @@ std::filesystem::path GetExecutableFullPath();
 std::string GetExecutableName();
 std::pair<std::filesystem::path, std::filesystem::path> GetBaseFolderAndDefaultConfigurationPath();
 std::string GetHostname();
-
-class NoCopy
-{
-   public:
-    NoCopy() noexcept {}
-
-    NoCopy(const NoCopy&) = delete;
-    NoCopy& operator=(const NoCopy&) = delete;
-};
 
 template <typename T>
 std::string NumberFormat(T num, const char* formatString)
@@ -279,7 +270,7 @@ std::string GetLocationPrefix(const char* file, const char* funcSignature);
  *
  * @note This class is thread-safe.
  */
-class SyncEvent : public NoCopy
+class SyncEvent
 {
    public:
     /**
@@ -288,6 +279,9 @@ class SyncEvent : public NoCopy
      * @param autoReset If true, event is auto-reset; otherwise, manual-reset.
      */
     SyncEvent(bool initialState, bool autoReset);
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(SyncEvent);
 
     /**
      * @brief Sets the event to the signaled state.
@@ -336,13 +330,16 @@ class SyncEvent : public NoCopy
  *       processor time consumed by the program. These values may differ significantly in
  *       multi-threaded applications or when the process is suspended.
  */
-class Stopwatch : public NoCopy
+class Stopwatch
 {
    public:
     /**
      * @brief Default constructor that initializes the stopwatch and immediately starts timing.
      */
     Stopwatch(std::string name = "");
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(Stopwatch);
 
     /**
      * @brief Starts or restarts the timing measurement.
@@ -435,13 +432,16 @@ class Stopwatch : public NoCopy
  *       compiling your project with CallGraphMonitor enabled can alter the optimizations the compiler can do
  *       and may lead to different inlining decisions or other performance-related changes.
  */
-class CallGraphMonitor : public NoCopy
+class CallGraphMonitor
 {
    public:
     /**
      * @brief Default constructor that initializes the call graph monitor.
      */
     CallGraphMonitor() noexcept;
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(CallGraphMonitor);
 
     /**
      * @brief Gets the current singleton instance of the call graph monitor.
@@ -518,7 +518,7 @@ class CallGraphMonitor : public NoCopy
     };
 };
 
-class CallGraphMonitorAgent : public NoCopy
+class CallGraphMonitorAgent
 {
    public:
     /**
@@ -527,6 +527,9 @@ class CallGraphMonitorAgent : public NoCopy
      * @param func Function name being monitored.
      */
     CallGraphMonitorAgent(const char* file, const char* func);
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(CallGraphMonitorAgent);
 
     /**
      * @brief Destructor that automatically stops monitoring when leaving function scope.

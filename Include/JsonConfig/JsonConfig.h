@@ -27,11 +27,13 @@ using json = nlohmann::json;
  * error occurs. This makes it ideal for relaxed, fault-tolerant configuration scenarios. If your application demands stricter validation
  * and error reporting, JsonConfig may not be the right tool.
  */
-class JsonConfig : public NoCopy
+class JsonConfig
 {
    public:
     JsonConfig() noexcept;
     ~JsonConfig();
+
+    DELETE_COPY_AND_ASSIGNMENT(JsonConfig);
 
     static JsonConfig* GetInstance() noexcept;
     static void SetInstance(JsonConfig* instance) noexcept;

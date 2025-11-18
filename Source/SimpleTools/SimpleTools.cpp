@@ -82,7 +82,7 @@ filesystem::path GetExecutableFullPath()
     GetModuleFileNameA(NULL, path, sizeof(path) - 1);
 #else
     const ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
-    if (len > 0 && len < (ssize_t)(sizeof(path) - 1))
+    if (len > 0 && len < TOLONG(sizeof(path) - 1))
     {
         path[len] = 0;  // Null-terminate the string, because readlink does not do it
     }

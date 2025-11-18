@@ -48,11 +48,14 @@ class ILoggerPlugin
     virtual void Flush(bool stillRunning, bool force) = 0;
 };
 
-class Logger : public NoCopy
+class Logger
 {
    public:
     Logger() noexcept;
     ~Logger();
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(Logger);
 
     static Logger* GetInstance() noexcept;
     static void SetInstance(Logger* instance) noexcept;
@@ -133,11 +136,15 @@ class Logger : public NoCopy
 #define LOG_VERBOSE(a) ;
 #endif
 
-class LoggerStream : public NoCopy
+class LoggerStream
 {
    public:
     LoggerStream() noexcept;
     virtual ~LoggerStream();
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(LoggerStream);
+
     std::ostringstream& Get(LogLevel level = Debug) noexcept;
     std::ostringstream& GetEx(const char* file, const char* func, LogLevel level = Debug) noexcept;
 
@@ -148,7 +155,6 @@ class LoggerStream : public NoCopy
     std::ostringstream m_buffer;
 
    private:
-    LoggerStream(const LoggerStream&);
     const char* m_file;
     const char* m_func;
     LogLevel m_level;

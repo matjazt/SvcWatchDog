@@ -13,11 +13,14 @@
 
 #include <JsonConfig/JsonConfig.h>
 
-class CryptoTools : public NoCopy
+class CryptoTools
 {
    public:
     CryptoTools() noexcept;
     ~CryptoTools();
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(CryptoTools);
 
     static CryptoTools* GetInstance() noexcept;
     static void SetInstance(CryptoTools* instance) noexcept;

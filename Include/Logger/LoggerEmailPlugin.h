@@ -12,13 +12,16 @@
 #include <Logger/Logger.h>
 #include <Email/EmailSender.h>
 
-class LoggerEmailPlugin : public ILoggerPlugin, NoCopy
+class LoggerEmailPlugin : public ILoggerPlugin
 {
    public:
     static void ConfigureAll(JsonConfig& cfg, Logger& logger, const std::string& parentSection = "log.email");
 
     LoggerEmailPlugin(JsonConfig& cfg, const std::string& section);
     ~LoggerEmailPlugin();
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(LoggerEmailPlugin);
 
     virtual void Log(LogLevel level, const std::string& message);
     virtual LogLevel MinLogLevel();

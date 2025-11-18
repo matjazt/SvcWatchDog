@@ -29,11 +29,14 @@ using namespace std;
 // Copyright notice: this class is based on PJ Naughter's CNTService class ( http://www.naughter.com/serv.html )
 // and contains fragments of its code. It is used here with explicit permission by the author.
 
-class SvcWatchDog : public NoCopy
+class SvcWatchDog
 {
    public:
     SvcWatchDog() noexcept;
     ~SvcWatchDog();
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(SvcWatchDog);
 
     void Configure();
 

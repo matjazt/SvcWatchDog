@@ -3,11 +3,14 @@
 
 #include <JsonConfig/JsonConfig.h>
 
-class EmailSender : public NoCopy
+class EmailSender
 {
    public:
     EmailSender() noexcept;
     ~EmailSender();
+
+    // prevent copying and assignment
+    DELETE_COPY_AND_ASSIGNMENT(EmailSender);
 
     static EmailSender* GetInstance() noexcept;
     static void SetInstance(EmailSender* instance) noexcept;
