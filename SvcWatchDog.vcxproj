@@ -249,7 +249,9 @@
     <ClCompile Include="Source\CryptoTools\CryptoTools.cpp" />
     <ClCompile Include="Source\EMail\EmailSender.cpp" />
     <ClCompile Include="Source\JsonConfig\JsonConfig.cpp" />
+    <ClCompile Include="Source\JsonConfig\JsonProtector.cpp" />
     <ClCompile Include="Source\Logger\LoggerEmailPlugin.cpp" />
+    <ClCompile Include="Source\SimpleTools\SimpleCrypto.cpp" />
     <ClCompile Include="Source\SimpleTools\SimpleTools.cpp" />
     <ClCompile Include="Source\SvcWatchDog\SvcWatchDog.cpp" />
     <ClCompile Include="Source\SvcWatchDog\Main.cpp" />
@@ -260,8 +262,11 @@
     <ClInclude Include="Include\CryptoTools\CryptoTools.h" />
     <ClInclude Include="Include\EMail\EmailSender.h" />
     <ClInclude Include="Include\JsonConfig\JsonConfig.h" />
+    <ClInclude Include="Include\JsonConfig\JsonProtector.h" />
     <ClInclude Include="Include\Logger\LoggerEmailPlugin.h" />
+    <ClInclude Include="Include\PicoSHA2\picosha2.h" />
     <ClInclude Include="Include\SimpleTools\GenericRegistry.h" />
+    <ClInclude Include="Include\SimpleTools\SimpleCrypto.h" />
     <ClInclude Include="Include\SimpleTools\SimpleTools.h" />
     <ClInclude Include="Include\SvcWatchDog\resource.h" />
     <ClInclude Include="Include\SvcWatchDog\SvcWatchDog.h" />
@@ -275,6 +280,7 @@
     <None Include="LICENSE-CNTService" />
     <None Include="LICENSE-jsonhpp" />
     <None Include="LICENSE-libcurl" />
+    <None Include="LICENSE-PicoSHA2" />
     <None Include="README.md" />
     <None Include="Scripts\pack.bat" />
     <None Include="Scripts\TestService.ps1" />

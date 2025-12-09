@@ -265,6 +265,9 @@ The disclaimer for this library is included in file [LICENSE-libcurl](LICENSE-li
 
 - Botan library (<https://botan.randombit.net/>) is being used for encryption and decryption purposes. Thanks to authors and contributors!
 
+- PicoSHA2 library (<https://github.com/okdshin/PicoSHA2>) is being used by the JsonProtector library (which is not used 
+in SvcWatchDog at the moment). Thanks to okdshin! 
+
 ## False Positive Detection by ESET Internet Security
 When building **SvcWatchDog**, some users may encounter a false positive warning from ESET Internet Security, identifying
 the executable as **Win64/GenKryptik.HKHZ**. This issue appears to be triggered by the inclusion of **libcurl**, 

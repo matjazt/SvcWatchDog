@@ -43,6 +43,12 @@
     <ClCompile Include="Source\Logger\LoggerEmailPlugin.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
+    <ClCompile Include="Source\JsonConfig\JsonProtector.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SimpleTools\SimpleCrypto.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Logger\Logger.h">
@@ -73,6 +79,15 @@
     <ClInclude Include="Include\SimpleTools\GenericRegistry.h">
       <Filter>Tools</Filter>
     </ClInclude>
+    <ClInclude Include="Include\JsonConfig\JsonProtector.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\SimpleTools\SimpleCrypto.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\PicoSHA2\picosha2.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Scripts\TestService.ps1">
@@ -92,6 +107,7 @@
     <None Include="SvcWatchDog.private.json" />
     <None Include="LICENSE-Botan" />
     <None Include="LICENSE-libcurl" />
+    <None Include="LICENSE-PicoSHA2" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Include\SvcWatchDog\SvcWatchDog.rc">
