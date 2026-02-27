@@ -65,6 +65,14 @@ Logger::~Logger()
     }
 }
 
+void Logger::LogErrorToConsole(const std::string& message)
+{
+    if (m_minConsoleLevel <= LogLevel::Error)
+    {
+        cerr << message << "\n";
+    }
+}
+
 Logger* Logger::GetInstance() noexcept { return m_instance; }
 
 void Logger::SetInstance(Logger* instance) noexcept { m_instance = instance; }
@@ -112,9 +120,9 @@ LogLevel Logger::GetMinPluginLevel()
 
 void Logger::Start()
 {
-    if (!m_running)
+    bool expected = false;
+    if (m_running.compare_exchange_strong(expected, true))
     {
-        m_running = true;
         m_thread = thread(&Logger::Thread, this);
 
         LOGSTR() << "minConsoleLevel=" << m_minConsoleLevel << ", minFileLevel=" << m_minFileLevel << ", filePath=" << m_filePath.string()
@@ -125,10 +133,10 @@ void Logger::Start()
 
 void Logger::Shutdown()
 {
-    if (m_running)
+    bool expected = true;
+    if (m_running.compare_exchange_strong(expected, false))
     {
         LOGSTR() << "shutting down";
-        m_running = false;
         m_threadTrigger.SetEvent();  // signal the thread to wake up and finish
         m_thread.join();
     }
@@ -254,7 +262,16 @@ void Logger::Msg(LogLevel level, const char* pszFmt, ...)
 
     const int actualLength = _vsnprintf(&message[0], maxSize - 1, pszFmt, p);
     va_end(p);
-    message.resize(actualLength);
+
+    if (actualLength < 0)
+    {
+        // truncation or error occurred
+        message.resize(maxSize - 1);
+    }
+    else
+    {
+        message.resize(actualLength);
+    }
 
     Log(level, message);
 }
@@ -289,41 +306,56 @@ void Logger::Flush(bool force)
     catch (const std::exception& e)
     {
         // we can't afford to properly log exceptions here, because it might push us into a loop.
-        cerr << "Logger::Thread: exception while flushing file queue: " << e.what() << "\n";
+        LogErrorToConsole("Logger::Thread: exception while flushing file queue: " + string(e.what()));
         // For the time being, we're just catching the exception and hope it was temporary.
     }
     catch (...)
     {
-        // we can't afford to properly log exceptions here, because it might push us into a loop.
-        cerr << "Logger::Thread: exception while flushing file queue\n";
+        LogErrorToConsole("Logger::Thread: unknown exception while flushing file queue");
         // For the time being, we're just catching the exception and hope it was temporary.
     }
 
     // flush plugins
     for (auto& plugin : m_plugins)
     {
-        plugin->Flush(m_running, force);
+        try
+        {
+            plugin->Flush(m_running, force);
+        }
+        catch (const std::exception& e)
+        {
+            // we can't afford to properly log exceptions here, because it might push us into a loop.
+            LogErrorToConsole("Logger::Thread: exception while flushing plugin: " + string(e.what()));
+            // For the time being, we're just catching the exception and hope it was temporary.
+        }
+        catch (...)
+        {
+            LogErrorToConsole("Logger::Thread: unknown exception while flushing plugin");
+            // For the time being, we're just catching the exception and hope it was temporary.
+        }
     }
 }
 
 void Logger::FlushFileQueue()
 {
-    m_cs.lock();
+    std::unique_ptr<std::queue<std::string>> queueCopy;
 
-    if (m_fileQueue->empty())
     {
-        // nothing to flush, let's unlock and return
-        m_cs.unlock();
-        return;
+        const lock_guard<mutex> lock(m_cs);
+
+        if (m_fileQueue->empty())
+        {
+            return;
+        }
+
+        queueCopy = std::move(m_fileQueue);
+        m_fileQueue = std::make_unique<queue<string>>();
+
+        // we're done with m_fileQueue, it is now freshly initialized
+        // let's unlock the logger and write the data to the f
     }
 
-    auto queueCopy = std::move(m_fileQueue);
-    m_fileQueue = std::make_unique<queue<string>>();  // create a new queue for future logs
-    // we're done with m_fileQueue, it is now freshly initialized
-    // let's unlock the logger and write the data to the file
-    m_cs.unlock();
-
-    // open the file in append mode
+    // open the file in append mode (without holding the lock)
     std::ofstream outFile(m_filePath, std::ios::app);
 
     if (outFile.is_open())
@@ -337,7 +369,8 @@ void Logger::FlushFileQueue()
     }
     else
     {
-        LOGSTR() << "unable to write to file " << m_filePath.string();
+        LogErrorToConsole("Logger: unable to open file " + m_filePath.string() + " for writing");
+
         // it's worth trying to create the folder again, although it should already exist
         filesystem::create_directories(m_filePath.parent_path());
     }

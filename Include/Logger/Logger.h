@@ -34,6 +34,7 @@
 #include <queue>
 #include <sstream>
 #include <thread>
+#include <atomic>
 
 enum LogLevel
 {
@@ -59,15 +60,38 @@ enum LogLevel
     MaskAllLogs
 };
 
+/**
+ * Logger plugin interface.
+ *
+ * Plugins must be registered before any logging threads start.
+ * The Log() callback must be fast and non-blocking; use internal buffering/queueing if I/O is required.
+ * Never call Logger methods from within plugin callbacks to avoid deadlock.
+ */
 class ILoggerPlugin
 {
    public:
     virtual ~ILoggerPlugin() = default;
+
+    // Called from any thread; must be fast and non-blocking.
     virtual void Log(LogLevel level, const std::string& message) = 0;
+
+    // Returns the minimum log level this plugin wants to receive.
     virtual LogLevel MinLogLevel() = 0;
+
+    // Called periodically and during shutdown; may block briefly.
     virtual void Flush(bool stillRunning, bool force) = 0;
 };
 
+/**
+ * Thread-safe logging system with console, file, and plugin output.
+ *
+ * Typical usage:
+ *   1. Configure() - set log levels and file paths
+ *   2. RegisterPlugin() - add any plugins (before Start)
+ *   3. Start() - begin logging thread
+ *   4. [application runs, calls Log/LOGSTR/etc]
+ *   5. Shutdown() - stop logging thread and flush
+ */
 class Logger
 {
    public:
@@ -82,11 +106,13 @@ class Logger
 
     void SetFileNamePostfix(const std::string& postfix) noexcept;
     void Configure(JsonConfig& cfg, const std::string& section = "log");
+
+    // Register plugins before Start() and before spawning additional threads.
     void RegisterPlugin(std::unique_ptr<ILoggerPlugin> plugin);
     LogLevel GetMinPluginLevel();
 
-    void Start();
-    void Shutdown();
+    void Start();     // Starts the background logging thread.
+    void Shutdown();  // Stops the logging thread and flushes all output.
     void Mute(bool mute) noexcept;
     void Log(LogLevel level, const std::string& message, const char* file = nullptr, const char* func = nullptr);
     void Msg(LogLevel level, const char* pszFmt, ...);
@@ -105,27 +131,21 @@ class Logger
     int m_maxFileSize;
     int m_maxWriteDelay;
     size_t m_maxOldFiles;
-    // LogLevel m_minEmailLevel;
-    // string m_emailSection;
-    // vector<string> m_emailRecipients;
-    // string m_emailSubject;
-    // int m_maxEmailDelay;
-    // int m_maxEmailLogs;
-    // int m_emailTimeoutOnShutdown;
     bool m_logThreadId;
 
     std::vector<std::unique_ptr<ILoggerPlugin>> m_plugins;
-    bool m_mute;
+    std::atomic_bool m_mute;
     std::unique_ptr<std::queue<std::string>> m_fileQueue;
     uint64_t m_emailTimestamp;
     std::thread m_thread;
     SyncEvent m_threadTrigger;
-    bool m_running;
+    std::atomic_bool m_running;
 
     std::mutex m_cs;
 
     void Thread();
     void FlushFileQueue();
+    void LogErrorToConsole(const std::string& message);
 };
 
 #define Lg (*Logger::GetInstance())
@@ -146,12 +166,14 @@ class Logger
 // logging macros which causes the logs to only *compile* in debug mode, so they have no impact whatsoever in release mode
 #if (defined(_DEBUG) || defined(FORCE_LOG_DEBUG)) && !defined(PREVENT_LOG_DEBUG)
 #define LOG_DEBUG(a) LOGSTR(Debug) << a;
+#define LOG_DEBUG_ENABLED
 #else
 #define LOG_DEBUG(a) ;
 #endif
 
 #if (defined(_DEBUG) || defined(FORCE_LOG_VERBOSE)) && !defined(PREVENT_LOG_VERBOSE)
 #define LOG_VERBOSE(a) LOGSTR(Verbose) << a;
+#define LOG_VERBOSE_ENABLED
 #else
 #define LOG_VERBOSE(a) ;
 #endif
