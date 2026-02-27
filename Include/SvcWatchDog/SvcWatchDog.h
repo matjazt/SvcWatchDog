@@ -89,6 +89,8 @@ class SvcWatchDog
     bool ReceiveUdpPing();
     void InitiateProcessShutdown();
 
+    std::mutex m_cs;
+
     string m_section;
     string m_serviceName;
     filesystem::path m_exeFile;
@@ -109,7 +111,7 @@ class SvcWatchDog
 
     SERVICE_STATUS_HANDLE m_serviceStatusHandle;
 
-    bool m_isRunning;
+    std::atomic<bool> m_isRunning;
     HANDLE m_loopTriggerEvent;
 
     // static data

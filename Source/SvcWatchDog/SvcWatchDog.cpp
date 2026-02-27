@@ -253,6 +253,7 @@ SvcWatchDog::~SvcWatchDog()
 void SvcWatchDog::SetStatus(DWORD state)
 {
     LOGSTR() << "serviceStatusHandle=" << (uint64_t)m_serviceStatusHandle << ", state=" << state;
+    const lock_guard<mutex> lock(m_cs);
     m_serviceStatus.dwCurrentState = state;
     ::SetServiceStatus(m_serviceStatusHandle, &m_serviceStatus);
 }
