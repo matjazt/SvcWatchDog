@@ -125,15 +125,24 @@ pair<filesystem::path, filesystem::path> GetBaseFolderAndDefaultConfigurationPat
 {
     auto exePath = GetExecutableFullPath();
     auto exeFolder = exePath.parent_path();
-    auto baseFolder = exeFolder.parent_path();
-    auto binFolderStem = exeFolder.stem().string();
+    auto baseFolder = exeFolder;
 
-    std::ranges::transform(binFolderStem, binFolderStem.begin(), [](unsigned char c) { return char(std::tolower(c)); });
-
-    if (binFolderStem == "debug" || binFolderStem == "release")
+    // descend up to three levels if we detect special folder names like "debug", "release", "bin" or "build.*" which are typically used in
+    // build output folders, but we want the base folder to be the project root, not the build output folder
+    for (int i = 0; i < 3; i++)
     {
-        // if we are in the debug or release folder, go one level up to the base folder
-        baseFolder = baseFolder.parent_path();
+        auto folderName = baseFolder.stem().string();
+        std::ranges::transform(folderName, folderName.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+
+        // NOTE: stem() returns the last part of the path without extension, so we get "build" for "build.linux", for example
+        if (folderName == "debug" || folderName == "release" || folderName == "bin" || folderName == "build")
+        {
+            baseFolder = baseFolder.parent_path();
+        }
+        else
+        {
+            break;
+        }
     }
 
     auto cfgPath = baseFolder / "etc" / (exePath.stem().string() + ".json");
@@ -262,15 +271,28 @@ string GetLocationPrefix(const char* file, const char* funcSignature)
         g++;
     }
 
-    string functionName(p, g - p);
-    if (colon > p)
+    if (g <= p)
     {
-        // we have something like ClassName::MethodName, so just return it
-        return functionName;
+        // something is wrong, return just the file stem
+        return GetFileStem(file);
     }
 
+    if (colon > p)
+    {
+        if (colon >= g - 1)
+        {
+            // we have a colon followed by nothing useful, so we should get rid of the colon, too
+            g--;
+        }
+
+        // we have something like ClassName::MethodName, so just return it
+        return string(p, g - p);
+    }
+
+    const string functionName(p, g - p);
+
     // the function name does not contain the class name, so we should log the file name to make it clear where the log came from
-    return GetFileStem(file) + "." + functionName;
+    return functionName.length() > 0 ? GetFileStem(file) + "." + functionName : GetFileStem(file);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
